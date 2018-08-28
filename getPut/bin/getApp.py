@@ -323,11 +323,7 @@ def collectProfileById(elements,type):
     elif isinstance(elements,list):
         mylist = elements
     if mylist:
-        keep = []
-        for e in mylist:
-            if e['collection'] in collections:
-                keep.append(e)
-        collectById(keep,type )
+        collectById(mylist,type )
     elif len(elements) > 1:
         eprint("Green code expects a single ALL element or array of Profiles but found " + len(elements) + " code needs attention")
 
