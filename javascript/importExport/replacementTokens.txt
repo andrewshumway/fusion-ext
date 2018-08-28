@@ -1,0 +1,1 @@
+@example_token~@ | any occurance of ${@example_token~@} found in the file will be replace with text from after the pipe.
