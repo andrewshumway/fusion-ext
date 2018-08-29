@@ -272,7 +272,7 @@ def doPostByIdThenPut(apiUrl, payload, type, qsParams=None, idField='id', usr=No
     elif response.status_code != 200:
         if args.verbose:
             print "...Failure."
-        eprint("Non OK response of " + str(response.status_code) + " when doing PUT/POST to: " + apiUrl + '/' + id)
+        eprint("Non OK response of " + str(response.status_code) + " when doing PUT/POST to: " + apiUrl + '/' + id + ' response.text: ' + response.text)
 
     return response
 
@@ -352,8 +352,8 @@ def putApps():
         # put the the name of the app in a global
         f = appFiles[0]
         with open(os.path.join(args.dir,f), 'r') as jfile:
+            #Capture the id in the global so that /apps/APP_ID type urls can be used to maintain APP links
             payload = json.load(jfile);
-            # this script only supports local collections so remove any reference to existing in order to create
             appName = payload['id']
 
     elif len(appFiles) == 1 :
@@ -391,8 +391,9 @@ def putCollections():
     for f in getFileListForType("collections"):
         with open(os.path.join(args.dir,f), 'r') as jfile:
             payload = json.load(jfile);
-            # this script only supports local collections so remove any reference to existing in order to create
-            if payload["solrParams"]:
+            # pop off name for collections pointing at "default".  That way the local collections get created in Solr.
+            # keep the name for external (non-default) collections since those only need the Fusion reference created.
+            if payload["solrParams"] and payload["searchClusterId"] == "default":
                 payload["solrParams"].pop('name', None)
 
         response = doPostByIdThenPut(apiUrl, payload, 'Collection')
@@ -429,7 +430,7 @@ def getFileListing(path,fileList=[],pathPrefix=''):
 def putSchema(colName):
     schemaUrl = args.protocol + "://" + args.server + ":" + args.port + "/api/apollo/collections/" + colName + "/solr-config"
     currentZkFiles = []
-    # get a listing of current files
+    # get a listing of current files via Fusion's solr-config api. This prevents uploading directories which don't exist (unsupported)
     zkFilesJson = doHttpJsonGet(schemaUrl + "?recursive=true")
     if zkFilesJson and len(zkFilesJson) > 0:
         for obj in zkFilesJson:
@@ -445,9 +446,10 @@ def putSchema(colName):
     files = getFileListing(dir)
     counter = 0;
 
-    if args.verbose:
+    if args.verbose and len(files) > 0:
         sprint("\nUploading Solr config for collection: " + colName)
     for file in files:
+        #if the file is part of the current configset and is avaliable for upload, upload it.
         if os.path.isfile(os.path.join(dir,file)):
             counter += 1
             isLast = len(files) == counter
