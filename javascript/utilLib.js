@@ -22,6 +22,7 @@
     var JavaString = Java.type('java.lang.String');
     var JavaDate = Java.type('java.util.Date');
     var System = Java.type('java.lang.System');
+    var StringBuilder = Java.type('java.lang.StringBuilder');
     var FileInputStream = Java.type('java.io.FileInputStream');
     var InputStream = Java.type('java.io.InputStream');
     var Properties = Java.type('java.util.Properties');
@@ -952,6 +953,89 @@
             }
         }
         return tikaTextParsed
+    }
+
+    /**
+     * Execute a command via Runtime.exec() a
+     * @param cmd Process
+     */
+    util.exec = function(cmd){
+        try{
+            var proc = java.lang.Runtime.getRuntime().exec(cmd);
+            return proc;
+        }catch(e){
+            throw e;
+        }
+    }
+
+    /**
+     * Read an InputStream to a String (UTF-8 assumed)
+     * @private
+     */
+    util._readToBuffer = function (is,buffer){
+        while(is.available()){
+            buffer.append(IOUtils.toString(is,"UTF-8"))
+        }
+    };
+    /**
+     * Check a Process object to see if it is done.  If the process is long-running and
+     * @private
+     * @param process
+     * @return exit code if complete, null if still running.
+     */
+    util._checkProcessExit = function(process){
+        var ev = null;
+        try{
+            ev = process.exitValue();
+        }catch(e){
+            //IllegalThreadStateException is thrown if the process is still running
+            if(! (e instanceof Java.type("java.lang.IllegalThreadStateException") )){
+                throw e;
+            }
+        }
+        return ev;
+    };
+    /**
+     * Execute a command-line process, buffering the stdout and stderr.
+     * If run as part of a Fusion pipeline, long-running processes will cause a pipeline timeout.
+     * If the buffered output is large it can affect heap
+     *
+     * @return array[0]=exit code, [0] = stdout buffer (String) and [1] = stderr buffer (String)
+     */
+    util.execAndBuffer = function(cmd){
+
+        var EXIT = 0;
+        var OUT = 1;
+        var ERR = 2;
+        var rv = [null,new StringBuilder(),new StringBuilder()];
+        var inReader,errReader;
+        try{
+            var proc = util.exec(cmd)
+            var stdIn = proc.getInputStream();
+            var stdErr = proc.getErrorStream();
+            do{
+                //read in output while it's there then check to see if we have an exit
+                rv[EXIT] = util._checkProcessExit(proc);
+                for(var i = 0; i < 10; i++){
+                    util._readToBuffer(stdIn,rv[OUT]);
+                    util._readToBuffer(stdErr,rv[ERR]);
+                }
+
+            }while(rv[EXIT] == null);
+        }catch(e){
+            throw e
+        }finally{
+            if(proc && proc.getInputStream()){
+                proc.getInputStream().close();
+            }
+            if(proc && proc.getErrorStream()){
+                proc.getErrorStream().close();
+            }
+        }
+        //convert StringBuilder to String
+        rv[OUT] = rv[OUT].toString();
+        rv[ERR] = rv[ERR].toString();
+        return rv;
     }
 
     //by returning util, it (as well as util.index and util.query) will be accessible/public.
