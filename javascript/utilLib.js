@@ -998,8 +998,11 @@
     /**
      * Execute a command-line process, buffering the stdout and stderr.
      * If run as part of a Fusion pipeline, long-running processes will cause a pipeline timeout.
-     * If the buffered output is large it can affect heap
+     * If the buffered output is large it can affect heap.
      *
+     * The HTTP timeout for pipeline operations is configurable via:
+     * ui.jvmOptions = -Dcom.lucidworks.apollo.admin.proxy.socket.timeout=TIMEOUT_MS
+     * 
      * @return array[0]=exit code, [0] = stdout buffer (String) and [1] = stderr buffer (String)
      */
     util.execAndBuffer = function(cmd){
