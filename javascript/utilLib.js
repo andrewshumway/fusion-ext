@@ -7,16 +7,11 @@
  * library of "static" Utility functions useful in index or query pipeline stages.
  *
  */
-/* globals  Java,arguments*/
+/* globals  Java,arguments */
 (function(){
     "use strict";
     /* TODO: ideas
-     set doc id
-     concat two or more fields
-     Solr date to Date and back
      Merge two documents
-     MV field to SV field
-     replace whitespace and newlines
      to and from Base64
      */
     var JavaString = Java.type('java.lang.String');
@@ -263,7 +258,7 @@
         //test the mapping of a solr doc into tester
         var fieldMap = {
             'fromSolr_s': 'toDoc_s'
-        }
+        };
         var solrDoc = new org.apache.solr.common.SolrDocument();
         solrDoc.addField('fromSolr_s', 'value from solr document');
         var params = [tester,solrDoc,fieldMap];
@@ -1002,7 +997,7 @@
      *
      * The HTTP timeout for pipeline operations is configurable via:
      * ui.jvmOptions = -Dcom.lucidworks.apollo.admin.proxy.socket.timeout=TIMEOUT_MS
-     * 
+     *
      * @return array[0]=exit code, [0] = stdout buffer (String) and [1] = stderr buffer (String)
      */
     util.execAndBuffer = function(cmd){
