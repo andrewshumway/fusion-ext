@@ -1,0 +1,67 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.pa.sblox.fusion-ext</groupId>
+    <artifactId>utilLib</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <samaxes.version>1.7.6</samaxes.version>
+        <jsdoc.version>1.2.0</jsdoc.version>
+    </properties>
+    <build>
+
+        <plugins>
+            <plugin>
+                <groupId>com.samaxes.maven</groupId>
+                <artifactId>minify-maven-plugin</artifactId>
+                <version>${samaxes.version}</version>
+                <executions>
+                    <execution>
+                        <id>default-minify</id>
+                        <configuration>
+                            <skipMerge>true</skipMerge>
+                            <webappSourceDir>${project.basedir}</webappSourceDir>
+                            <jsSourceDir>util</jsSourceDir>
+                            <jsEngine>YUI</jsEngine>
+                            <jsSourceFiles>
+                                <jsSourceFile>loadBlobScript.js</jsSourceFile>
+                                <jsSourceFile>utilLib.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <cssSourceFiles/>
+
+                        </configuration>
+                        <goals>
+                            <goal>minify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>com.phasebash.jsdoc</groupId>-->
+                <!--<artifactId>jsdoc3-maven-plugin</artifactId>-->
+                <!--<version>${jsdoc.version}</version>-->
+                <!--<configuration>-->
+                    <!--<sourceFiles>-->
+                        <!--<sourceFile>${baseDir}/util/utilLib.js</sourceFile>-->
+                    <!--</sourceFiles>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
+            <!-- ... -->
+        </plugins>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>com.samaxes.maven</groupId>
+            <artifactId>minify-maven-plugin</artifactId>
+            <version>${samaxes.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.phasebash.jsdoc</groupId>
+            <artifactId>jsdoc3</artifactId>
+            <version>${jsdoc.version}</version>
+        </dependency>
+    </dependencies>
+</project>
