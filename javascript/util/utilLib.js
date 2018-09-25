@@ -75,7 +75,7 @@
     /**
      * TODO:  as more html tokens are encountered, add them to this array
      * list of html tokens to include int the search-replace
-     * @type {{re: RegExp, rv: string}[]}
+     * @type {{re: RegExp, rv: string[]}}
      */
     var replacements =  [
         { re:/&nbsp;/g, rv:' ' },{ re:/&ensp;/g, rv:' ' },{ re:/&emsp;/g, rv:' ' },{ re:/&thinsp;/g, rv:' ' },{ re:/&zwnj;/g, rv:' ' },{ re:/&shy;/g, rv:' ' },{ re:/&lrm;/g, rv:' ' },{ re:/&rlm;/g, rv:' ' },{ re:/&zwj;/g, rv:' ' }
@@ -132,6 +132,11 @@
      * functions in the util.query element are inteded for use in a query pipeline where
      * request, response, context, collectionName, solrServer and solrServerFactory are avaliable
      *
+     * @function [query.runTests] run query tests sending output to logger and ctx
+     * @param request  The query pipeline's request param
+     * @param response the query pipeline's response param
+     * @param ctx the query pipeline's context object.  Test results will be added
+     * @param collecton the query pipeline's collection name
      * ***************************************************************************************/
     query.runTests = function (request, response, ctx, collection, solrServer, solrServerFactory){
         //do a sanity check on arguments in case they change in some Fusion version
@@ -154,7 +159,7 @@
      * arbitrary data to the client.
      *
      * JSONResponse (when wt=json) impliments appendObject.  Other AppendableResponses (xml) do not
-     *
+     * @function
      * @param response a com.lucidworks.apollo.solr.response.JSONResponse object
      * @param key
      * @param value
@@ -308,10 +313,10 @@
     };
 
     /**
-     * @private
+     *
      * call this via 'util._stubLogger.call(this)' to set this.logger to an object which uses the nashor print method instead
      * of calls to logger.  This is useful in a test harness where the logger global has not been set.
-     *
+     * @private
      */
     util._stubLogger = function(){
         if (! this.logger){
@@ -764,22 +769,38 @@
 
         return rsp;
     };
-    util.queryHttp2String = function(url) {
+    /**
+     * Perform an HTTP GET and if text or json is returned, read it as a String
+     *
+     * @param url
+     * @param charSetName (default=UTF-8)
+     * @return {string}
+     */
+    util.queryHttp2String = function(url,charSetName) {
+        charSetName = charSetName || 'UTF-8';
         var responseString = "";
         var rsp = this.queryHttp(url);
         logger.debug('MESSAGE got resp: ' + rsp );
         if (rsp && rsp.getEntity()) {
-            responseString = IOUtils.toString(rsp.getEntity().getContent(), 'UTF-8');
+            var entity = rsp.getEntity();
+            var contentType = rsp.getEntity().getContentType();
+            if(contentType && (
+                contentType.getValue() == 'application/json' ||
+                contentType.getValue().startsWith('text')
+                ))
+            {
+                responseString = IOUtils.toString(entity.getContent(), charSetName);
+            }
         }
         return responseString
     };
     /**
      * Perform an HTTP GET request for a URL and parse the results to JSON.
-     * Note: for example simplicity we assume the response holds a JSON formatted UTF-8 string.
      */
-    util.queryHttp2Json =function(url){
-        var responseString = this.queryHttp2String(url);
-        logger.info('MESSAGE HTTP_GET resp: ' + responseString );
+    util.queryHttp2Json =function(url, charSetName){
+        charSetName = charsetName || 'UTF-8'
+        var responseString = this.queryHttp2String(url,charSetName);
+        logger.debug('MESSAGE HTTP_GET resp: ' + responseString );
         return JSON.parse(responseString);
     };
 
