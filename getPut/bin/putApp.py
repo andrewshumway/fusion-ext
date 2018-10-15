@@ -243,7 +243,7 @@ def printPostResponse(f,type,response):
 
 
 #  POST the given payload to apiUrl.  If it already exists then tack on the id to the URL and try a PUT
-def doPostByIdThenPut(apiUrl, payload, type, qsParams=None, idField='id', usr=None, pswd=None, existsChecker=None):
+def doPostByIdThenPut(apiUrl, payload, type, putParams=None, idField='id', usr=None, pswd=None, existsChecker=None):
     if existsChecker == None:
         existsChecker = lambda response,payload: response.status_code == 409
     usr = getDefOrVal(usr,args.user)
@@ -254,8 +254,6 @@ def doPostByIdThenPut(apiUrl, payload, type, qsParams=None, idField='id', usr=No
         sprint("\nAttempting POST of " + type + " definition for '" + id + "' to Fusion.")
     headers['Content-Type'] = "application/json"
     url = apiUrl
-    if qsParams:
-        url += "?" + qsParams
 
     response = requests.post(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload))
     if existsChecker(response,payload):
@@ -263,8 +261,9 @@ def doPostByIdThenPut(apiUrl, payload, type, qsParams=None, idField='id', usr=No
             sprint("The " + type + " definition for '" + id + "' exists.  Attempting PUT.")
 
         url = apiUrl + "/" + id
-        if qsParams:
-            url += "?" + qsParams
+        if putParams:
+            url += "?" + putParams
+
         response = requests.put(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload))
 
     if response.status_code == 200 and args.verbose:
@@ -397,7 +396,7 @@ def putCollections():
                 payload["solrParams"].pop('name', None)
             # if args.ignoreExternal then don't process any collections in an external cluster
             if not args.ignoreExternal or payload["searchClusterId"] == "default":
-                response = doPostByIdThenPut(apiUrl, payload, 'Collection')
+                response = doPostByIdThenPut(apiUrl, payload, 'Collection','relatedObjects=false')
                 if response.status_code == 200:
                     putSchema(payload['id'])
 
