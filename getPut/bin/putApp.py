@@ -395,10 +395,11 @@ def putCollections():
             # keep the name for external (non-default) collections since those only need the Fusion reference created.
             if payload["solrParams"] and payload["searchClusterId"] == "default":
                 payload["solrParams"].pop('name', None)
-
-        response = doPostByIdThenPut(apiUrl, payload, 'Collection')
-        if response.status_code == 200:
-            putSchema(payload['id'])
+            # if args.ignoreExternal then don't process any collections in an external cluster
+            if not args.ignoreExternal or payload["searchClusterId"] == "default":
+                response = doPostByIdThenPut(apiUrl, payload, 'Collection')
+                if response.status_code == 200:
+                    putSchema(payload['id'])
 
 def doHttp(url,usr=None, pswd=None):
     usr = getDefOrVal(usr,args.user)
@@ -536,8 +537,11 @@ def main():
     findFiles()
     # putApps must be the first export, clusters next.  blobs and collections in either order then pipelines
     putApps()
-    putFileForType('searchCluster',True)
-    putCollections() # try collections before blobs to see if that fixes error
+
+    # do not update external searchCluster config if ignoreExternal=True
+    if not args.ignoreExternal:
+        putFileForType('searchCluster',True)
+    putCollections()
     putBlobs()
     putFileForType('index-pipelines')
     putFileForType('query-pipelines')
@@ -572,6 +576,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", help="Port, Default: ${lw_PORT} or 8764") #,default="8764"
     parser.add_argument("-u","--user", help="Fusion user, default: ${lw_USER} or 'admin'.") #,default="admin"
     parser.add_argument("--password", help="Fusion password,  default: ${lw_PASSWORD} or 'password123'.") #,default="password123"
+    parser.add_argument("--ignoreExternal", help="Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json). default: False",default=False,action="store_true")
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
 
