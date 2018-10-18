@@ -20,6 +20,7 @@ JavaScript stages.
 14 Sep 2018 - Wire in Maven to minify `utilLib.js` and `loadBlobScript.js`.  Note, the minified loadBlobScript functions still need to be copy/pasted into `utilLib.js` if modified.
 10 Sep 2018 -  Add `util.exec()` and `util.execAndBuffer()` for executing shell process via stage script.
 29 Aug 2018 - Initial release
+18 Oct 2018 - Add contact info
 
 ### acknowledgements
 The ideas for the getPut scripts originated with the import-export scripts 
@@ -30,3 +31,9 @@ instead of bash for ease of use in processing .json results and debug capability
 
 The sharable utilLib.js and pipeline templates grew out of a Blog post I made
 in late 2017. https://lucidworks.com/2017/08/16/fusion-javascript-shared-scripts-utility-functions-unit-tests/
+
+### Contact
+If you would like more information about the content on this site, contact:
+- Patrick Hoeffel, patrick.hoeffel@polarisalpha.com
+- Andrew Shumway, andrew.shumway@polarisalpha.com
+- Matt Kuiper, matt.kuiper@polarisalpha.com
