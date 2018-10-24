@@ -121,6 +121,14 @@ def initArgs():
     elif os.sep not in args.dir:
         defDir = args.dir
         args.dir = defDir
+    if args.keep == None:
+        args.keep = []
+    else:
+        args.keep = args.keep.split(',')
+
+
+
+
 
 
 
@@ -344,7 +352,7 @@ def collectCollections(elements,type="collections"):
 
 def shouldKeepCollection(id,e):
     if id.endswith("_signals") or id.endswith("_signals_aggr"):
-        return False
+        return id in args.keep
     return True
 
 def collectIndexPipelines(elements):
@@ -381,6 +389,7 @@ if __name__ == "__main__":
     parser.add_argument("--protocol", help="REST Protocol,  default: ${lw_PROTOCOL} or 'http'.")
     parser.add_argument("--port", help="Fusion Port, default: ${lw_PORT} or 8764") #,default="8764"
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("--keep", help="Comma delimited list of signals collections to keep, default=None.",default=None) #,default="password123"
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
 
     #print("args: " + str(sys.argv))
