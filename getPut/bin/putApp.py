@@ -29,7 +29,7 @@ OBJ_TYPES = {
     ,"index-profiles": { "ext": "IPF" , "filelist": [] }
     ,"query-profiles": { "ext": "QPF" , "filelist": [] }
     ,"parsers": { "ext": "PS" , "filelist": [] }
-    ,"datasources": { "ext": "DS" , "api": "connectors/datasources","filelist": [] }
+    ,"datasources": { "ext": "DS" , "api": "connectors/datasources","filelist": [], "substitue": True}
     ,"collections": { "ext": "COL" , "filelist": [] }
     ,"jobs": { "ext": "JOB" , "filelist": [] }
     ,"tasks": { "ext": 'TSK' , "filelist": [] }
@@ -43,6 +43,8 @@ OBJ_TYPES = {
 
 }
 
+varReplacements = None
+replacePattern = r"^\$\{(.*)\}$"
 # array of ext =  [ OBJ_TYPES[k]['ext'] for k in OBJ_TYPES.keys() ] or [v['ext'] for v in OBJ_TYPES.values() if 'ext' in v]
 # rework above to be keyed by extension v[1]['ext'] contining value of {type, filelist}
 EXT_FILES_MAP = dict((v[1]['ext'],{'type':v[0],'filelist':v[1]['filelist']}) for v in [v for v in OBJ_TYPES.items() ])
@@ -53,6 +55,10 @@ def getSuffix(type):
     else:
         eprint("ERROR: No object Suffix of '" + type + "' is registered in OBJ_TYPES. ")
 
+def isSubstitutionType(type):
+    if type in OBJ_TYPES and 'substitute' in OBJ_TYPES[type] and OBJ_TYPES[type]:
+        return True
+    return False
 def getFileListForType(type):
     if type in OBJ_TYPES:
         return OBJ_TYPES[type]['filelist']
@@ -100,6 +106,7 @@ def getVersionedApi(type, typeObj, default):
     return api
 
 def initArgs():
+    global varReplacements
     debug('initArgs top')
     env = {} #some day we may get better environment passing
 
@@ -121,6 +128,14 @@ def initArgs():
 
     if not os.path.isdir(args.dir):
         sys.exit( "Can not find or access the " + args.dir + " directory. Process aborted. ")
+
+    if args.varFile != None:
+        if os.path.isfile(args.varFile):
+            with open(args.varFile, 'r') as jfile:
+                varReplacements = json.load(jfile);
+        else:
+            sys.exit( "Cannot find or access the " + args.varFile + " file.  Process aborted.")
+
 
 def initArgsFromMaps(key, default, penv,env):
     if penv.has_key(key):
@@ -147,22 +162,34 @@ def getDefOrVal(val,default):
     if val==None:
         return default
     return val
-def doMultipartPost(url,dataFile, usr=None, pswd=None):
-    usr = getDefOrVal(usr,args.user)
-    pswd = getDefOrVal(pswd,args.password)
+def substituteVariable(obj, varMap):
+    if varMap and isinstance(obj, basestring) and re.search(replacePattern, obj):
+        match = re.search(replacePattern, obj)
+        group = match.group(1)
+        var = varMap[group]
+        if var:
+            obj = var
+    return obj;
 
-    response = None
+def traverseAndReplace(obj, varMap = None, path=None):
+    # short circuit if we have no mappings
+    if isinstance(varMap, dict):
+        if path is None:
+            path = []
 
-    #,('variableValues', ('bar.png', open('bar.png', 'rb'), 'image/png'))
-    multiple_files = [('importData', (dataFile, open(os.path.join(args.dir,dataFile), 'rb'), 'text/json')) ]
-    if args.varFile:
-        multiple_files.append(('variableValues', (args.varFile, open(args.varFile, 'rb'), 'text/json')))
+        if isinstance(obj, dict):
+            value = {k: traverseAndReplace(v, varMap, path + [k])
+                     for k, v in obj.items()}
+        elif isinstance(obj, list):
+            value = [traverseAndReplace(elem, varMap, path + [[]])
+                     for elem in obj]
+        else:
+            #search and see if our path is a ${var} match and if so replace with value from varFile
+            value = substituteVariable(obj,varMap)
+    else:
+        value = obj;
 
-    try:
-        response = requests.post(url, auth=requests.auth.HTTPBasicAuth(usr, pswd), files=multiple_files)
-        return response
-    except requests.ConnectionError as e:
-        eprint(e)
+    return value
 
 def doHttpPostPut(url,dataFile, isPut,headers=None, usr=None, pswd=None):
     usr = getDefOrVal(usr,args.user)
@@ -177,8 +204,6 @@ def doHttpPostPut(url,dataFile, isPut,headers=None, usr=None, pswd=None):
         else:
             headers['Content-Type'] = "text/plain"
 
-
-    response = None
     files = None
     try:
         if os.path.isfile(dataFile):
@@ -193,54 +218,6 @@ def doHttpPostPut(url,dataFile, isPut,headers=None, usr=None, pswd=None):
             eprint("File '" + dataFile + "' does not exist.  PUT/POST not performed.")
     except requests.ConnectionError as e:
         eprint(e)
-
-
-def printResponseJsonErrors(file,type,j,keys):
-    bannerPrinted = False
-    for prob in keys:
-        e = j[prob]
-        if e and len(e):
-            if not bannerPrinted:
-                eprint("Error(s) encountered when uploading " + type + " from " + file)
-                bannerPrinted = True
-            for line in e:
-                eprint("\t" + prob + ' : ' + line)
-
-def printResponseJsonWarnings(file,type,j,keys):
-    if not args.verbose:
-        return
-
-    bannerPrinted = False
-    for prob in keys:
-        e = j[prob]
-        if e and len(e):
-            if not bannerPrinted:
-                sprint("Warning(s) encountered when uploading " + type + " from " + file)
-                bannerPrinted = True
-                for line in e:
-                    # conflicts are not important when overwriting
-                    if IMPORT_POLICY == "overwrite" and prob == "validationWarnings" and line == "There are conflicts":
-                        continue
-                    sprint("\t" + prob + ' : ' + line)
-
-
-def printPostResponse(f,type,response):
-    j = None
-    try:
-        j = json.loads(response.content)
-        if args.verbose:
-            sprint( "... Reported Status: " + str(j['status']))
-            if j['importActions'] and len(j['importActions']):
-                for ia in j['importActions']:
-                    sprint("\tAction: " + ia)
-    except:
-        if args.verbose:
-            sprint("... Successful POST response but details are unavailable.")
-
-    if j:
-        printResponseJsonErrors(f,type,j,['importErrors','variablesErrors','validationErrors'])
-        printResponseJsonWarnings(f,type,j,['variablesWarnings','validationWarnings','conflicts'])
-
 
 #  POST the given payload to apiUrl.  If it already exists then tack on the id to the URL and try a PUT
 def doPostByIdThenPut(apiUrl, payload, type, putParams=None, idField='id', usr=None, pswd=None, existsChecker=None):
@@ -274,21 +251,6 @@ def doPostByIdThenPut(apiUrl, payload, type, putParams=None, idField='id', usr=N
         eprint("Non OK response of " + str(response.status_code) + " when doing PUT/POST to: " + apiUrl + '/' + id + ' response.text: ' + response.text)
 
     return response
-
-def doPost(url, f,type):
-    if args.verbose:
-        sprint("\nUploading " + type + " definition for '" + f + "' to Fusion.")
-    response = doMultipartPost(url,f)
-    if response and response.status_code == 200:
-        printPostResponse(f,type,response)
-    elif response and response.status_code != 200:
-        if args.verbose:
-            sprint("...Failure.")
-            eprint("Non OK response of " + str(response.status_code) + " when importing: " + f)
-    else:
-        eprint("No HTTP response when attempting import of : " + f)
-    return response;
-
 
 
 def putBlobs():
@@ -515,6 +477,8 @@ def putFileForType(type,forceLegacy=False, idField=None, existsChecker=None ):
     for f in getFileListForType(type):
         with open(os.path.join(args.dir,f), 'r') as jfile:
             payload = json.load(jfile)
+            if isSubstitutionType(type):
+                payload = traverseAndReplace(payload,varReplacements)
             #doPostByIdThenPut(apiUrl, payload, type,None, idField)
             doPostByIdThenPut(apiUrl, payload, type,None,idField,None,None,existsChecker)
 
@@ -577,7 +541,9 @@ if __name__ == "__main__":
     parser.add_argument("--password", help="Fusion password,  default: ${lw_PASSWORD} or 'password123'.") #,default="password123"
     parser.add_argument("--ignoreExternal", help="Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json). default: False",default=False,action="store_true")
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("--varFile",help="Protected variables file used for password replacement (if needed) default: None.",default=None)
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
+
 
     args = parser.parse_args()
 

@@ -179,7 +179,7 @@
      */
     query.appendStringToResponse = function(response, key,value){
         if(response && response.initialEntity && typeof(response.initialEntity.appendStringList) === 'function'){
-            response.initialEntity.appendStringList(key,value);
+            response.initialEntity.appendString(key,value);
         }
     };
     /**
