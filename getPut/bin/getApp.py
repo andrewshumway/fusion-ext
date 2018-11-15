@@ -128,10 +128,6 @@ def initArgs():
 
 
 
-
-
-
-
 def initArgsFromMaps(key, default, penv,env):
     if penv.has_key(key):
         debug("penv has_key" + key + " : " + penv[key])
