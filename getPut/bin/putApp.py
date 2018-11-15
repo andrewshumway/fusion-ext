@@ -29,7 +29,7 @@ OBJ_TYPES = {
     ,"index-profiles": { "ext": "IPF" , "filelist": [] }
     ,"query-profiles": { "ext": "QPF" , "filelist": [] }
     ,"parsers": { "ext": "PS" , "filelist": [] }
-    ,"datasources": { "ext": "DS" , "api": "connectors/datasources","filelist": [], "substitue": True}
+    ,"datasources": { "ext": "DS" , "api": "connectors/datasources","filelist": [], "substitute": True}
     ,"collections": { "ext": "COL" , "filelist": [] }
     ,"jobs": { "ext": "JOB" , "filelist": [] }
     ,"tasks": { "ext": 'TSK' , "filelist": [] }
@@ -162,30 +162,32 @@ def getDefOrVal(val,default):
     if val==None:
         return default
     return val
-def substituteVariable(obj, varMap):
+def substituteVariable(obj, objName, varMap):
     if varMap and isinstance(obj, basestring) and re.search(replacePattern, obj):
         match = re.search(replacePattern, obj)
         group = match.group(1)
         var = varMap[group]
         if var:
+            if args.verbose:
+                sprint("Substituting value in object " + objName + " for key: " + group)
             obj = var
     return obj;
 
-def traverseAndReplace(obj, varMap = None, path=None):
+def traverseAndReplace(obj, objName, varMap = None, path=None):
     # short circuit if we have no mappings
     if isinstance(varMap, dict):
         if path is None:
             path = []
 
         if isinstance(obj, dict):
-            value = {k: traverseAndReplace(v, varMap, path + [k])
+            value = {k: traverseAndReplace(v, objName, varMap, path + [k])
                      for k, v in obj.items()}
         elif isinstance(obj, list):
-            value = [traverseAndReplace(elem, varMap, path + [[]])
+            value = [traverseAndReplace(elem, objName, varMap, path + [[]])
                      for elem in obj]
         else:
             #search and see if our path is a ${var} match and if so replace with value from varFile
-            value = substituteVariable(obj,varMap)
+            value = substituteVariable(obj, objName, varMap)
     else:
         value = obj;
 
@@ -478,7 +480,7 @@ def putFileForType(type,forceLegacy=False, idField=None, existsChecker=None ):
         with open(os.path.join(args.dir,f), 'r') as jfile:
             payload = json.load(jfile)
             if isSubstitutionType(type):
-                payload = traverseAndReplace(payload,varReplacements)
+                payload = traverseAndReplace(payload,f, varReplacements)
             #doPostByIdThenPut(apiUrl, payload, type,None, idField)
             doPostByIdThenPut(apiUrl, payload, type,None,idField,None,None,existsChecker)
 
