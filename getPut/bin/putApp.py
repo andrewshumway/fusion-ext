@@ -271,7 +271,10 @@ def putBlobs():
             blobId = blobj['id']
             meta = blobj["metadata"]
             if meta:
-                resourceType = meta['resourceType']
+                if 'resourceType' in meta:
+                    resourceType = meta['resourceType']
+                elif 'type' in meta:
+                    resourceType = meta['type']
 
             contentType = blobj["contentType"]
             path = blobj["path"]
@@ -282,7 +285,7 @@ def putBlobs():
 
         headers = {};
         if contentType:
-            headers['Content-Type']=contentType
+            headers['Content-Type'] = contentType
 
         # convert unix path from json to os path which may be windows
         fullpath = blobdir + path.replace('/',os.sep)
@@ -380,7 +383,10 @@ def doHttpJsonGet(url):
         j = json.loads(response.content)
         return j
     else:
-        eprint("Non OK response of " + str(response.status_code) + " for URL: " + url)
+        if response.status_code == 401 and 'unauthorized' in response.text:
+            eprint("Non OK response of " + str(response.status_code) + " for URL: " + url + "\nCheck your password\n")
+        else:
+            eprint("Non OK response of " + str(response.status_code) + " for URL: " + url)
 
 
 def getFileListing(path,fileList=[],pathPrefix=''):

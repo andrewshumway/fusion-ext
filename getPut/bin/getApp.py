@@ -169,7 +169,10 @@ def doHttpJsonGet(url, usr=None,pswd=None):
             j = json.loads(response.content)
             return j
     else:
-        eprint("Non OK response of " + str(response.status_code) + " for URL: " + url)
+        if response and response.status_code == 401 and 'unauthorized' in response.text:
+            eprint("Non OK response of " + str(response.status_code) + " for URL: " + url + "\nCheck your password\n")
+        elif:
+            eprint("Non OK response of " + str(response.status_code) + " for URL: " + url)
 
 
 def doHttpZipGet(url, usr=None, pswd=None):
