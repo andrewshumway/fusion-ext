@@ -171,7 +171,7 @@ def doHttpJsonGet(url, usr=None,pswd=None):
     else:
         if response and response.status_code == 401 and 'unauthorized' in response.text:
             eprint("Non OK response of " + str(response.status_code) + " for URL: " + url + "\nCheck your password\n")
-        elif:
+        elif response and response.status_code:
             eprint("Non OK response of " + str(response.status_code) + " for URL: " + url)
 
 
