@@ -38,7 +38,7 @@ def main():
 
   common = s1.intersection(s2)
   uniq1 = s1.difference(s2)
-  uniq2 = s2.difference(s2)
+  uniq2 = s2.difference(s1)
 
   #print output
   if args.verbose:
