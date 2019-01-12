@@ -1,5 +1,5 @@
 # fusion-ext
-This project contains utilities and tools intended for use with Lucidworks Fusion.
+Project: `getPut` for import/export, `javascript` for examples and utilities.  Both for use with Lucidworks Fusion. 
 
 
 ### ./getPut
@@ -35,6 +35,5 @@ in late 2017. https://lucidworks.com/2017/08/16/fusion-javascript-shared-scripts
 
 ### Contact
 If you would like more information about the content on this site, contact:
-- Patrick Hoeffel, patrick.hoeffel@polarisalpha.com
-- Andrew Shumway, andrew.shumway@polarisalpha.com
-- Matt Kuiper, matt.kuiper@polarisalpha.com
+- Patrick Hoeffel, patrick.hoeffel@lucidworks.com
+- Andrew Shumway, andrew.shumway@lucidworks.com
