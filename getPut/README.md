@@ -36,13 +36,15 @@ To override, either edit your copy of the script or `export KEY=VALUE` in the pa
 * `putApp.sh` or `putApp.ph`  An App aware version of `putProject.sh` used import an app.  Run with the `--help` option to see syntax.
   * if using the `--varFile` option please structure the variables replacement file json so that
   the object key correlates to the key in the `_DS.json`file which contains the redacted passwords.
-  ```
-  { 
+
+```
+{ 
     "secret.1.password":"password123",
     "secret.2.thing":"23de34df3ca1998702"
   }
 ```
-  See https://doc.lucidworks.com/fusion-server/4.1/reference-guides/api/objects-api.html#encrypted-passwords
+
+See https://doc.lucidworks.com/fusion-server/4.1/reference-guides/api/objects-api.html#encrypted-passwords
 * `getProject.sh` or `getProject.ph`  When run with the `--list` option, this script will fetch all Collections, Datasources, Index Pipelines, and Query Pipelines on a given Fusion instance with names starting with the `PREFIX` value.  When run without the `--list` option (default), this script will use the Objects API to get separate exports of each Collection, Datasources, Index Pipelines, and Query Pipeline etc. and save them in a directory specified by `--dir`.
    * both `schema.xml` and `managed-schema` are fetched from the server but typically only one will exist.  This results in a spurious 404 error.
    * Intended for use in Fusion 3.x  Simple collections work in 4.x but are not fully compatible with putApp.  However, after using `getProject.py`, 
@@ -65,6 +67,8 @@ To override, either edit your copy of the script or `export KEY=VALUE` in the pa
 
 ### Installation Notes:
 
-These scripts require Python verion 2.7. and have been tested both in CentOS 7, and on a Windows git-bash shell. Windows does not have a standard Python interpreter so one will need to be installed (https://www.python.org/).  and added to the PATH.  
-Also, while the Requests package from http://python-requests.org is standard on many 2.7 clients some do no include it so it will need to `pip install requests`.
+These scripts require Python verion 2.7. and have been tested both in CentOS 7, and on a Windows git-bash shell. 
+Some clients such as Windows, do not have a standard Python interpreter so one will need to be installed (https://www.python.org/).  and added to the PATH.
+Some clients ship with the `requests` package from http://python-requests.org. Many however will need to install this via 
+`pip install requests`.  Pip itself may need installation as well via `yum install`, `brew install`, etc.
  

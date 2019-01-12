@@ -7,8 +7,12 @@ The getPut directory contains utilities useful when getting or putting objects a
 It can be used to back up, restore, or migrate a Fusion App.
 
 #### Release Notes:
-15 Oct 2018 - Add the `relatedObjects=false` flag when using PUT on collections in order to avoid extra Profile and Pipeline creation.  Also add `--ignoreExternal` arg to `putApp.py` allowing an import to skip external collection config.  This is handy for environments where external collections are not created and maintained by Fusion.
-29 Aug 2018 Initial release
+ * 29 Aug 2018 Initial release
+ * 15 Oct 2018 - Add the `relatedObjects=false` flag when using PUT on collections in order to avoid extra Profile and Pipeline creation.
+Also add `--ignoreExternal` arg to `putApp.py` allowing an import to skip external collection config.  This can be used to
+avoid creation and configset update for external collections which may not be maintained via Fusion.
+ * 15 Nov 2018  Add support in `putApp` for declaring a varFile containing replacement tokens usefull in password injection.
+ 
 
 ### ./javascript
 The javascript directory contains sample Index and Query Pipeline JavaScript stages
