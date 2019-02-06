@@ -839,6 +839,18 @@
         }
         return response;
     };
+    /**
+    * Make a PipelineDocument holding a Delete command
+    * @param id  - the id of the document to be deleted from Solr
+    * @return PipelineDocument.newDelete(id)
+    */
+    util.makeDeleteCommand = function(id){
+        return PipelineDocument.newDelete(id, true);
+
+    }
+    index.makeDeleteCommand = function(doc){
+       return util.makeDeleteCommand(doc.getId());
+    }
 
     /**
      * sample function intended for copy-paste reuse
