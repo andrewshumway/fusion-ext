@@ -112,7 +112,8 @@ def initArgs():
         args.password = initArgsFromMaps("lw_PASSWORD","password123",os.environ,env)
 
     if args.app == None:
-        args.app = initArgsFromMaps("lw_APP","lwes_",os.environ,env)
+        if args.zip == None:
+            sys.exit("either the --app or the --zip argument is required.  Can not proceed.")
 
     if args.dir == None:
         # make default dir name
@@ -192,12 +193,13 @@ def doHttpZipGet(url, usr=None, pswd=None):
         eprint("Non OK response of " + str(response.status_code) + " for URL: " + url)
 
 def gatherSearchClusters():
-    url = makeBaseUri() + "/searchCluster"
-    objects = doHttpJsonGet(url)
-    if objects:
-        for obj in objects:
-            if 'id' in obj and obj['id'] != "default":
-                searchClusters[obj['id']] = obj
+    if args.zip is None:
+        url = makeBaseUri() + "/searchCluster"
+        objects = doHttpJsonGet(url)
+        if objects:
+            for obj in objects:
+                if 'id' in obj and obj['id'] != "default":
+                    searchClusters[obj['id']] = obj
 
 def extractClusterForCollection(collection):
     clusterId = collection['searchClusterId']
@@ -209,10 +211,15 @@ def extractClusterForCollection(collection):
 
 def extractProject():
     # go thru each valued array and export them
+    objects = None
+    zipfile = None
+    if args.zip is not None:
+        zipfile = ZipFile(args.zip, 'r')
+    else:
+        baseUrl = makeBaseUri() + "/objects/export?filterPolicy=system&app.ids=" + args.app
+        zipfile = doHttpZipGet(baseUrl)
 
-    baseUrl = makeBaseUri() + "/objects/export?filterPolicy=system&app.ids=" + args.app
-    objects = None;
-    zipfile = doHttpZipGet(baseUrl)
+
     filelist = zipfile.namelist()
     #first process objects, then extract blobs and configsets
     if not "objects.json" in filelist:
@@ -220,12 +227,13 @@ def extractProject():
     jstr = zipfile.open("objects.json").read()
     objects = json.loads(jstr)
     # check to be sure that the requested application exsists and give error if not
-    if not objects or \
+    if args.app is not None and (not objects or \
+        ( args.app is not None ) or \
         (not len(objects['objects']) > 0) or \
-        (not objects['objects']['fusionApps']) or \
-        (not objects['objects']['fusionApps'][0]['id']) or \
-        (not objects['objects']['fusionApps'][0]['id'] == args.app):
-        sys.exit("No Fusion app called '" + args.app + "' found on server '" + args.server + "'.  Can not proceed.")
+        (not objects['objects']['fusionapps']) or \
+        (not objects['objects']['fusionapps'][0]['id']) or \
+        (not objects['objects']['fusionapps'][0]['id'] == args.app)):
+        sys.exit("no fusion app called '" + args.app + "' found on server '" + args.server + "'.  can not proceed.")
 
     # sorting ensures that collections are known when other elements are extracted
     for type in sorted(objects['objects'].iterkeys()):
@@ -364,7 +372,11 @@ def main():
         os.makedirs(args.dir)
     # Fetch solr clusters map so we can export if needed
     gatherSearchClusters()
-    sprint( "Geting export zip for app '" + args.app + "' from server '" + args.server + "'.")
+    target = args.app
+    if args.zip is not None:
+        sprint("Getting export zip from file '" + args.zip + "'.")
+    else:
+        sprint( "Geting export zip for app '" + args.app + "' from server '" + args.server + "'.")
     extractProject()
 
 if __name__ == "__main__":
@@ -380,9 +392,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=description, formatter_class=RawTextHelpFormatter )
 
     #parser.add_argument_group('bla bla bla instruction go here and they are really long \t and \n have tabs and\n newlines')
-    parser.add_argument("-a","--app", help="App to export", required=True) #,default="lwes_"
+    parser.add_argument("-a","--app", help="App to export") #,default="lwes_"
     parser.add_argument("-d","--dir", help="Output directory, default: '${app}_ccyymmddhhmm'.")#,default="default"
     parser.add_argument("-s","--server", metavar="SVR", help="Name or IP of server to fetch data from, \ndefault: ${lw_IN_SERVER} or 'localhost'.") # default="localhost"
+
+    parser.add_argument("-z","--zip", help="Path and name of the Zip file to read from rather than using an export from --server, \ndefault: None.", default=None)
+
     parser.add_argument("-u","--user", help="Fusion user name, default: ${lw_USER} or 'admin'.") #,default="admin"
     parser.add_argument("--password", help="Fusion Password,  default: ${lw_PASSWORD} or 'password123'.") #,default="password123"
     parser.add_argument("--protocol", help="REST Protocol,  default: ${lw_PROTOCOL} or 'http'.")
