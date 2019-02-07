@@ -228,12 +228,11 @@ def extractProject():
     objects = json.loads(jstr)
     # check to be sure that the requested application exsists and give error if not
     if args.app is not None and (not objects or \
-        ( args.app is not None ) or \
         (not len(objects['objects']) > 0) or \
-        (not objects['objects']['fusionapps']) or \
-        (not objects['objects']['fusionapps'][0]['id']) or \
-        (not objects['objects']['fusionapps'][0]['id'] == args.app)):
-        sys.exit("no fusion app called '" + args.app + "' found on server '" + args.server + "'.  can not proceed.")
+        (not objects['objects']['fusionApps']) or \
+        (not objects['objects']['fusionApps'][0]['id']) or \
+        (not objects['objects']['fusionApps'][0]['id'] == args.app)):
+        sys.exit("No Fusion App called '" + args.app + "' found on server '" + args.server + "'.  Can not proceed.")
 
     # sorting ensures that collections are known when other elements are extracted
     for type in sorted(objects['objects'].iterkeys()):
@@ -408,5 +407,6 @@ if __name__ == "__main__":
 
     #print("args: " + str(sys.argv))
     args = parser.parse_args()
+
 
     main()
