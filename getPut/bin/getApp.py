@@ -189,8 +189,11 @@ def doHttpZipGet(url, usr=None, pswd=None):
             return zipfile
         else:
             eprint("Non Zip content type of '" + contentType + "' for url:'" + url + "'" )
-    else:
+    elif response and response.status_code:
         eprint("Non OK response of " + str(response.status_code) + " for URL: " + url)
+    else:
+        # Bad url?? bad protocol?
+        eprint("Problem requesting URL: '" + url + "'.  Check server, protocol, port, etc.")
 
 def gatherSearchClusters():
     if args.zip is None:
@@ -382,7 +385,7 @@ if __name__ == "__main__":
     scriptName = os.path.basename(__file__)
     # sample line: 'usage: getProject.py [-h] [-l] [--protocol PROTOCOL] [-s SERVER] [--port PORT]'
     description = ('______________________________________________________________________________\n'
-                'Get artifacts associated with a Fusion app and store them in together in a folder \n'
+                'Get artifacts associated with a Fusion app and store them together in a folder \n'
                 'as flat files, .json, and .zip files. These can later be pushed back into the same, \n'
                 'or different, Fusion instance as needed. NOTE: if launching from getApp.sh, \n'
                 'defaults will be pulled from the bash environment plus values from bin/lw.env.sh\n'

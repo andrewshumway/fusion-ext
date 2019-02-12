@@ -503,7 +503,7 @@ def main():
     fetchFusionVersion()
     # fetch collections first
     if args.verbose:
-        sprint("Uploading objects found under '" + args.dir + "' to Fusion.")
+        sprint("Uploading objects found under '" + args.dir + "' to Fusion version " + fusionVersion)
 
     findFiles()
     # putApps must be the first export, clusters next.  blobs and collections in either order then pipelines
