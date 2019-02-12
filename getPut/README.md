@@ -112,8 +112,8 @@ To override, either edit your copy of the script or `export KEY=VALUE` in the pa
 #### Utility Scripts
 
 See https://doc.lucidworks.com/fusion-server/4.1/reference-guides/api/objects-api.html#encrypted-passwords
-* `getProject.sh` or `getProject.ph` is the Fusion 3.x verions of `getApp`. Run this with the `--help` option to see the syntax. 
-Tthis script will fetch all Collections, Datasources, Index Pipelines, and Query Pipelines on a given Fusion instance which have names starting
+* `getProject.sh` or `getProject.ph` is the Fusion 3.x versions of `getApp`. Run this with the `--help` option to see the syntax. 
+This script will fetch all Collections, Datasources, Index Pipelines, and Query Pipelines on a given Fusion instance which have names starting
  with a given `PREFIX` value.  This script will use the Objects API to get separate exports of each Collection, Datasources, Index Pipelines, and Query Pipeline etc. and save them in a directory specified by `--dir`.
    * both `schema.xml` and `managed-schema` are fetched from the server but typically only one will exist.  This results in a spurious 404 error.
    * Intended for use in Fusion 3.x  Simple collections work in 4.x but are not fully compatible with putApp.  However, after using running `getProject`, 
