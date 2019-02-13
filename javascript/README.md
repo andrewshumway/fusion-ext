@@ -7,27 +7,28 @@ rather than off of the server file system.
 
 ### ./IPL
 The IPL directory contains sample Index pipelines.  Of note is the samplePipeline.js which can be used as a template for 
-any script which loads the shared code in utilLib.js.  
+any script which loads the shared code in utilLib.js.  Alternatively, minimalPipelineSample.js can be used for stages which 
+do not load a shared library.  
 
 ### ./QPL
 The QPL directory contains sample Query pipelines.  Of note is the samplePipeline.js which can be used as a template for 
 any script which loads the shared code in utilLib.js.
 
- The ` var loadBlobScript` function in either of the two `samplePipeline.js` examples contain two functions near the top called 
- `bootstrapLibrary` and `loadBlobScript` (they may be minimized to the same line).  The contents of these can be replaced with any of the following:
+## General issues
+Both the minimalPipelineSample and the samplePipeline.js use the Immediately Invoked Function Expression (IIFE) common in client-side JavaScript.
+One key advantage of this is that a single `use-script` at the top makes it easier to spot errors early.  Another advantage is that the code
+outside of the `return function(...` block executes once performing initialization of static data structures can be done without having
+to pay the initialization penalty with every pipeline invocation.
 
-1. Minified copies of `bootstrapLibrary` and `loadBlobScript.js` (default).
-2. The contents of the `./loadBlobScript.js` file: This loads the shared script from the blob store via the API service 
-which greatly simplifies loading and caching.
-    1. only works if the name/IP of the API server is known (default of localhost).  
-    3. On topologies where `connectors-classic` and `api` services do not run on the same machine, passing the api server IP or name
-    instead of `localhost` is needed.
-2. `./loadBlobScriptFromSolr.js`:  This loads the blob from Solr rather than from the API service.  While this does not require pre-knowledge of
-the API server name it does require the Solr server name.  Also, because it walks the blob structure used by Fusion it can be brittle.
+As needed, adjust the `libBlob` and `apiServerName` values in the lazy load block of the `return function(...` section.
 
-### "Installation"
+* `libBlobName` is the name of the blob containing the library script you wish to load, default=utilLib.js.
+* `apiServerName` is a network name or IP address of a node in your Fusion Cluster which is running the API service, default=localhost.
+
+### "Installation" or how to Use in Fusion
 
 1. load `utilLib.js` into the blob store on the target instance.  
-2. Use one of the samplePipeline.js scripts as a starter template
-3. Check log messages which start with `BLOB_LOAD` via banana to see the status.  
-4. Double check that the `utilLib.js` loads and parses successfully on all nodes and threads.
+2. Use one of the samplePipeline.js scripts as a starter template.
+3. First get your stage working as local JavaScript and then move it to the Blob store as a Managed JavaScript Stage if desired (Fusion version 4.1.2+).
+4. Check log messages which start with `BLOB_LOAD` via banana to see the status.  
+5. Double check that the `utilLib.js` loads and parses successfully on all nodes and threads.
