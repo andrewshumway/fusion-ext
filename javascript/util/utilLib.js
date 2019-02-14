@@ -648,10 +648,10 @@
         }
         var passed = result == expected;
         if( passed || !expected ) {
-            logger.info(testDesc + result + "'");
+            logger.info('Utility test passed: ' + testDesc + result );
             getSubMap(outCtxObj,'passed').put(testDesc,resultMap);
         }else{
-            logger.error('\n\n***********\n* Utility test ' + testName + ' Failed.\n* Actual  : "' + result + '"\n* Expected: "' + expected + '"\n**************');
+            logger.error('Utility test ' + testName + ' Failed.\n* Actual  : "' + result + '"\n* Expected: "' + expected + '"');
             getSubMap(outCtxObj,'failed').put(testDesc, resultMap);
         }
     };

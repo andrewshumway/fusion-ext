@@ -25,7 +25,6 @@
           util.query.runTests(request, response,ctx,collection,solrServerFactory);
         }
         //TODO: add pipeline code
-        return doc;
     }
 
     /**
@@ -34,9 +33,9 @@
      */
     return function () {
         //check global and lazy load util library.  Then call our Main
+        var args = Array.prototype.slice.call(arguments);
         if(util === undefined) {
             //push library name, server, ctx and runTests to front of args list.  args.[1] for index ctx, [2] for query pipelines ctx
-            var args = Array.prototype.slice.call(arguments);
             var ctx = args[2];
             var libBlobName = ctx.get('_libBlobName') || 'utilLib.js'
             var apiServerName = ctx.get('_apiServerName') || 'localhost'
@@ -44,12 +43,18 @@
                 var url = "http://" + apiServerName + ":8765/api/v1/blobs/" + libBlobName;
                 logger.debug('BLOB_LOAD: Nashorn load of url: ' + url);
                 util = load(url);// jshint ignore:line
-                ctx.put('BLOB_' + libBlobName, util);
+                //ctx.put('BLOB_' + libBlobName, lib);
                 logger.debug('BLOB_LOAD loaded script from blobstore');
             } catch (error) {
-                logger.error("BLOB_LOAD Error querying or loading " + libBlobName + " script from blobstore via URL=" + url + "  Err: " + error);
+                var message = "BLOB_LOAD Error loading " + libBlobName + " from BlobStore. URL=" + url + "\n";
+                var desc = {}
+                var props = Object.getOwnPropertyNames(error)
+                for(var i=0; i < props.length; i++){
+                  desc[props[i]] = String(error[props[i]])
+                 }
+                 logger.error(message + JSON.stringify(desc,null,2))
             }
         }
-        return queryMain.apply(this, Array.prototype.slice.call(arguments));//delegate Fusion's call to our Main
+        return queryMain.apply(this, args);//delegate Fusion's call to our Main
     }
 })();
