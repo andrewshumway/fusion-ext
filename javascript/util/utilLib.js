@@ -196,6 +196,32 @@
         }
     };
 
+    /**
+    *  if using wt=json, Fusion's response object should be a JSONResponse
+    *  Depending on the version of Fusion, the returned map will need to be traversed in different ways.
+    *  Prior to 4.2 tree.get(response.initialEntity) would get the actual response Map which could be traversed via map.get('response').get('docs')
+    *  4.2 uses response.getUnderlyingObject()
+    *
+    *  on older platforms only the JSONResponse tree Map type is supported.  On newer platforms you get the actual underlying object which is
+    *  Map<String, Object> for JSON responses, Document for xml responses etc.
+    *
+    *  @return the response tree or null if one can't be found
+    */
+    query.getUnderlyingObject = function(response){
+        var rv = null;
+
+        // 4.2 style
+        if(response && typeof(response.getUnderlyingObject) === 'function'){
+          rv = response.getUnderlyingObject();
+        }
+        //old style
+        else if(response && response.initialEntity && util.getTypeOf(response.initialEntity) == 'JSONResponse' ){
+            var tree = com.lucidworks.apollo.solr.response.JSONResponse.class.getDeclaredField("tree");
+            tree.setAccessible(true);
+            rv = tree.get(response.initialEntity)
+        }
+        return rv;
+    }
     /***************************************************************************************************
      * functions in the util.index element are intended for use in an index pipeline where
      * doc, context, collectionName, and solrServerFactory are available.
