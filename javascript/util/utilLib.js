@@ -15,6 +15,8 @@
      to and from Base64
      */
     var JavaString = Java.type('java.lang.String');
+    var JavaStringArray = Java.type('java.lang.String[]');
+
     var JavaDate = Java.type('java.util.Date');
     var System = Java.type('java.lang.System');
     var StringBuilder = Java.type('java.lang.StringBuilder');
@@ -38,6 +40,11 @@
 
     var PipelineDocument = Java.type('com.lucidworks.apollo.common.pipeline.PipelineDocument');
     var PipelineField = Java.type('com.lucidworks.apollo.common.pipeline.PipelineField');
+
+    //var Constructor = Java.type('java.lang.reflect.Constructor');
+    //var Method = Java.type('java.lang.reflect.Method');
+    var URL = Java.type('java.net.URL');
+    var URLClassLoader = Java.type('java.net.URLClassLoader');
 
     /**
      * begin definition of file globals.  Anything not returned at the bottom will
@@ -337,6 +344,76 @@
             }
         }
     };
+
+    /**
+    *  Make a URLClassLoader ponting to one or more Jars.  This can be used to invoke custom Java
+    *<pre>
+     try{
+        //Define util, classLoader, and klass in out-of-block variables (private glboal)
+        logger.invo("loading jar pre sync" )
+        //double null-check on syncronized block to ensure we only load once per thread.
+        if(classLoader == null || klas == null){
+          Java.synchronized(function(){
+            if(classLoader == null || klas == null){
+              classLoader = util.loadJarFromBlob("HelloWorld.jar");
+              klas = util.getClassFromClassLoader("HelloWorld",classLoader)
+            }
+          }, URLClassLoader)();
+        }
+        var obj = null;
+
+        var strCtor = klas.getConstructor(JavaString.class)
+        if(strCtor && typeof(strCtor.newInstance) == 'function'){
+          obj = strCtor.newInstance("pipeline instance")
+          state.newDoc = obj.getDoc()
+        }else if(klas && typeof(klas.newInstance) == 'function'){
+          obj = klas.newInstance()
+          state.newDoc = obj.getDoc()
+        }else{
+         logger.error("skipped making instance obj " + klas + " " + util.getTypeOf(klas));
+        }
+    }catch(e){
+      logger.error("error reflecting " + e)
+      state.error = e
+    }
+    *</pre
+    *  @param = jarName  Name of the Jar to load (or array of names)
+    *  @param - apiServer the server name or IP of a Fusion API service.  Default = localhost
+    *  @param - apiPort  The port of the Fusion API service.  Default = 8765
+    *  @return the urlClassLoader or null
+    *  @throws Error if the URLClassLoader could not be instantiated
+    */
+    util.loadJarFromBlob = function(jarName,apiServer,apiPort){
+      apiServer = apiServer || "localhost";
+      apiPort = apiPort || 8765;
+
+      var classLoader = null;
+      var blobURI = "http://" + apiServer + ":" + apiPort + "/api/v1/blobs/";
+      var urls = [];
+      if(Array.isArray(jarName) || jarName instanceof JavaStringArray){
+         for(var i = 0; i < jarName.length; i++){
+           urls.push(new URL(blobURI + jarName[i].toString()));
+         }
+      }else{
+        urls.push(new URL(blobURI + jarName.toString()));
+      }
+
+      logger.debug("Loading URLClassLoader for URLs: " + urls  )
+
+      var classLoader = new URLClassLoader(urls,java.lang.Thread.currentThread().getContextClassLoader());
+      return classLoader;
+    }
+
+    /**
+    * Given a package.classname and a classLoader, reflect and return the class
+    * @param className - fully qualified package.ClassName i.e. com.foo.Bar
+    * @param a Classloader such as the one returned by util.loadJarFromBlob
+    * @returns the treults of classLoader.loadClass(className)
+    */
+    util.getClassFromClassLoader = function(className,classLoader){
+        var klass = classLoader.loadClass(className);
+        return klass;
+    }
 
     /**
      *
