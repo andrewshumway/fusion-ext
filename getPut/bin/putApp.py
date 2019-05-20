@@ -245,11 +245,9 @@ def doPostByIdThenPut(apiUrl, payload, type, putParams=None, idField='id', usr=N
 
         response = requests.put(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload))
 
-    if response.status_code == 200 and args.verbose:
+    if response.status_code == 200:
         sprint( "Element " + type + " id: " + id + " PUT/POSTed successfully")
     elif response.status_code != 200:
-        if args.verbose:
-            print "...Failure."
         eprint("Non OK response of " + str(response.status_code) + " when doing PUT/POST to: " + apiUrl + '/' + id + ' response.text: ' + response.text)
 
     return response
@@ -297,15 +295,15 @@ def putBlobs():
         if response and response.status_code >= 200 and response.status_code <= 250:
             if args.verbose:
                 sprint("Uploaded " + path + " payload successfully")
-                # makeBaseUri(True) is used for Fusion 4.0.1 compatibility but this requires us to make the link
-                lurl = makeBaseUri(True) + "/links"
-                # {"subject":"blob:lucid.googledrive-4.0.1.zip","object":"app:EnterpriseSearch","linkType":"inContextOf"}
-                payload = {"subject":"","object":"","linkType":"inContextOf"}
-                payload['subject'] = 'blob:' + blobId
-                payload['object'] = 'app:' + appName
-                lresponse = requests.put(lurl, auth=requests.auth.HTTPBasicAuth(args.user, args.password),headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                if lresponse and lresponse.status_code < 200 or lresponse.status_code > 250:
-                    eprint("Non OK response: " + str(lresponse.status_code) + " when linking Blob " + blobId + " to App " + appName)
+            # makeBaseUri(True) is used for Fusion 4.0.1 compatibility but this requires us to make the link
+            lurl = makeBaseUri(True) + "/links"
+            # {"subject":"blob:lucid.googledrive-4.0.1.zip","object":"app:EnterpriseSearch","linkType":"inContextOf"}
+            payload = {"subject":"","object":"","linkType":"inContextOf"}
+            payload['subject'] = 'blob:' + blobId
+            payload['object'] = 'app:' + appName
+            lresponse = requests.put(lurl, auth=requests.auth.HTTPBasicAuth(args.user, args.password),headers={"Content-Type": "application/json"}, data=json.dumps(payload))
+            if lresponse and lresponse.status_code < 200 or lresponse.status_code > 250:
+                eprint("Non OK response: " + str(lresponse.status_code) + " when linking Blob " + blobId + " to App " + appName)
 
         elif response and response.status_code:
             eprint("Non OK response: " + str(response.status_code) + " when processing " + f)
@@ -359,7 +357,15 @@ def putCollections():
             payload = json.load(jfile);
             # pop off name for collections pointing at "default".  That way the local collections get created in Solr.
             # keep the name for external (non-default) collections since those only need the Fusion reference created.
-            if payload["solrParams"] and payload["searchClusterId"] == "default":
+
+            doPop = payload["solrParams"] and payload["searchClusterId"] == "default"
+
+            # also keep if solrParams.name != the fusion name "id" and args.
+            if payload["solrParams"] and payload['id'] != payload['solrParams']['name'] and args.keepCollAlias:
+                doPop = False
+                debug("Not creating Solr collection named " + payload['solrParams']['name'] )
+
+            if doPop:
                 payload["solrParams"].pop('name', None)
             # if args.ignoreExternal then don't process any collections in an external cluster
             if not args.ignoreExternal or payload["searchClusterId"] == "default":
@@ -416,7 +422,7 @@ def putSchema(colName):
     files = getFileListing(dir)
     counter = 0;
 
-    if args.verbose and len(files) > 0:
+    if len(files) > 0:
         sprint("\nUploading Solr config for collection: " + colName)
     for file in files:
         #if the file is part of the current configset and is avaliable for upload, upload it.
@@ -502,8 +508,7 @@ def main():
     initArgs()
     fetchFusionVersion()
     # fetch collections first
-    if args.verbose:
-        sprint("Uploading objects found under '" + args.dir + "' to Fusion version " + fusionVersion)
+    sprint("Uploading objects found under '" + args.dir + "' to Fusion version " + fusionVersion)
 
     findFiles()
     # putApps must be the first export, clusters next.  blobs and collections in either order then pipelines
@@ -522,10 +527,28 @@ def main():
 
     putJobSchedules()
     putFileForType('tasks')
-    putFileForType('spark/jobs',None,None,lambda r,p: r.status_code == 409 or ((r.status_code == 500 or r.status_code == 400) and r.text.find( p['id'] +" already exists") > 0))
+    putFileForType('spark/jobs',None,None,lambda r,p: sparkChecker(r,p))
 
-    putFileForType("datasources",None,None,lambda r,p: r.status_code == 409 or (r.status_code == 500 and r.text.find("Data source id '" + p['id'] +"' already exists") > 0))
+    putFileForType("datasources",None,None,lambda r,p: datasourceChecker(r,p))
 
+def sparkChecker(response,payload):
+    exists = False
+    status = response.status_code
+    text = response.text;
+    exists = status == 409
+    if not exists:
+        exists = ( status == 500 or status == 400) and text.find( payload['id'] +" already exists") > 0
+    return exists
+
+def datasourceChecker(response,payload):
+    #old fusion sends 409, 4.1 500, 4.2 400
+    exists = False
+    status = response.status_code
+    text = response.text;
+    exists = status == 409
+    if not exists:
+        exists = ( status == 500 or status == 400) and text.find("Data source id '" + payload['id'] +"' already exists") > 0
+    return exists
 
 if __name__ == "__main__":
     scriptName = os.path.basename(__file__)
@@ -550,6 +573,9 @@ if __name__ == "__main__":
     parser.add_argument("--ignoreExternal", help="Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json). default: False",default=False,action="store_true")
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--varFile",help="Protected variables file used for password replacement (if needed) default: None.",default=None)
+    parser.add_argument("--keepCollAlias",help="Do not create Solr collection when the Fusion Collection name does not match the Solr collection. "
+                                                 "Instead, fail if the collection does not exist.  default: True.",default=True,action="store_true")# default=False
+
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
 
 

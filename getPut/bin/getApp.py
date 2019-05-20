@@ -63,6 +63,7 @@ OBJ_TYPES = {
     ,"searchCluster": "SC"
 }
 
+SKIP_COLLECTIONS = ["_signals","_signals_aggr","_job_reports","_query_rewrite","_query_rewrite_staging","_user_prefs"]
 searchClusters = {}
 collections = []
 
@@ -122,10 +123,10 @@ def initArgs():
     elif os.sep not in args.dir:
         defDir = args.dir
         args.dir = defDir
-    if args.keep == None:
-        args.keep = []
+    if args.keepCollections == None:
+        args.keepCollections = []
     else:
-        args.keep = args.keep.split(',')
+        args.keepCollections = args.keepCollections.split(',')
 
 
 
@@ -317,8 +318,12 @@ def doObjectTypeSwitch(elements, type):
 
 
 def jsonToFile(jData,filename):
-    with open(os.path.join(args.dir, filename), 'w') as outfile:
-        outfile.write(json.dumps(jData,indent=4))
+    # replace spaces in filename to make the files sed friendly
+    filename2 = filename.replace(' ','_')
+    with open(os.path.join(args.dir, filename2), 'w') as outfile:
+        # sorting keys makes the output source-control friendly.  Do we also want to strip out
+        # timestamp fields?
+        outfile.write(json.dumps(jData,indent=4,sort_keys=True))
 
 def collectById(elements,type,keyField='id'):
     for e in elements:
@@ -360,8 +365,14 @@ def collectCollections(elements,type="collections"):
 
 
 def shouldKeepCollection(id,e):
-    if id.endswith("_signals") or id.endswith("_signals_aggr"):
-        return id in args.keep
+    skip = False;
+    for cType in SKIP_COLLECTIONS:
+        skip = id.endswith(cType)
+        if skip:
+            break
+    # skip unless args.keepCollections set for this collection id
+    if skip:
+        return id in args.keepCollections
     return True
 
 def collectIndexPipelines(elements):
@@ -405,7 +416,7 @@ if __name__ == "__main__":
     parser.add_argument("--protocol", help="REST Protocol,  default: ${lw_PROTOCOL} or 'http'.")
     parser.add_argument("--port", help="Fusion Port, default: ${lw_PORT} or 8764") #,default="8764"
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
-    parser.add_argument("--keep", help="Comma delimited list of signals collections to keep, default=None.",default=None) #,default="password123"
+    parser.add_argument("--keepCollections", help="Comma delimited list of special collections to keep e.g. *_signals, default=None (skip all).",default=None) #,default="password123"
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
 
     #print("args: " + str(sys.argv))
