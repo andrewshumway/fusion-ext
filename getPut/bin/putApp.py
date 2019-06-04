@@ -492,6 +492,8 @@ def putFileForType(type,forceLegacy=False, idField=None, existsChecker=None ):
         with open(os.path.join(args.dir,f), 'r') as jfile:
             payload = json.load(jfile)
             if isSubstitutionType(type):
+                if args.verbose and isinstance(varReplacements, dict):
+                    sprint("Doing substitution for file " + f)
                 payload = traverseAndReplace(payload,f, varReplacements)
             #doPostByIdThenPut(apiUrl, payload, type,None, idField)
             doPostByIdThenPut(apiUrl, payload, type,None,idField,None,None,existsChecker)
@@ -525,11 +527,12 @@ def main():
     putFileForType('index-profiles')
     putFileForType('query-profiles')
 
-    putJobSchedules()
     putFileForType('tasks')
     putFileForType('spark/jobs',None,None,lambda r,p: sparkChecker(r,p))
 
     putFileForType("datasources",None,None,lambda r,p: datasourceChecker(r,p))
+    putJobSchedules()
+
 
 def sparkChecker(response,payload):
     exists = False
