@@ -222,7 +222,7 @@ def doHttpPostPut(url,dataFile, isPut,headers=None, usr=None, pswd=None):
         eprint(e)
 
 #  POST the given payload to apiUrl.  If it already exists then tack on the id to the URL and try a PUT
-def doPostByIdThenPut(apiUrl, payload, type, putParams=None, idField='id', usr=None, pswd=None, existsChecker=None):
+def doPostByIdThenPut(apiUrl, payload, type, putParams='?_cookie=false', idField='id', usr=None, pswd=None, existsChecker=None):
     if existsChecker == None:
         existsChecker = lambda response,payload: response.status_code == 409
     usr = getDefOrVal(usr,args.user)
@@ -332,8 +332,12 @@ def putApps():
 
     for f in appFiles:
         appsURL = args.protocol + "://" + args.server + ":" + args.port + "/api/apollo/apps"
-        postUrl = appsURL + "?relatedObjects=false"
-        putUrl = appsURL + "/" + appName + "?relatedObjects=false"
+        postUrl = appsURL
+        putUrl = appsURL + "/" + appName
+        if not args.makeAppCollections:
+            putUrl = putUrl + "?relatedObjects=false"
+            postUrl = postUrl + "?relatedObjects=false"
+
         response = doHttp(putUrl)
         isPut = response and response.status_code == 200;
         url = putUrl if isPut else postUrl
@@ -369,7 +373,7 @@ def putCollections():
                 payload["solrParams"].pop('name', None)
             # if args.ignoreExternal then don't process any collections in an external cluster
             if not args.ignoreExternal or payload["searchClusterId"] == "default":
-                response = doPostByIdThenPut(apiUrl, payload, 'Collection','relatedObjects=false')
+                response = doPostByIdThenPut(apiUrl, payload, 'Collection','relatedObjects=false&_cookie=false')
                 if response.status_code == 200:
                     putSchema(payload['id'])
 
@@ -498,6 +502,37 @@ def putFileForType(type,forceLegacy=False, idField=None, existsChecker=None ):
             #doPostByIdThenPut(apiUrl, payload, type,None, idField)
             doPostByIdThenPut(apiUrl, payload, type,None,idField,None,None,existsChecker)
 
+def putQueryRewrite():
+    rewriteUrl = makeBaseUri() + "/query-rewrite/instances"
+    # get a listing of current id's so we can create or update
+    stagingdir = os.path.join(args.dir,"query_rewrite_staging",appName)
+    files = os.listdir(stagingdir)
+    for f in files:
+        extension = os.path.splitext(f)[1]
+        if extension == '.json':
+            with open(os.path.join(stagingdir,f), 'r') as jfile:
+                staging = json.load(jfile);
+                create = {}
+                create['create'] = staging
+                response = doHttpJsonPut(rewriteUrl,create)
+
+                if response.status_code == 200 or response.status_code == 204:
+                    sprint( "Rewrite Staging rules updated.  Republish may be needed")
+                elif response.status_code != 200:
+                    eprint("Non OK response of " + str(response.status_code) + " when doing PUT to: " + rewriteUrl + ' response.text: ' + response.text)
+
+
+def doHttpJsonPut(url,payload, usr=None, pswd=None):
+    usr = getDefOrVal(usr,args.user)
+    pswd = getDefOrVal(pswd,args.password)
+    headers = {}
+    headers['Content-Type'] = "application/json"
+    try:
+        response = requests.put(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload))
+        return response
+    except requests.ConnectionError as e:
+        eprint(e)
+
 
 def fetchFusionVersion():
     global fusionVersion
@@ -532,6 +567,7 @@ def main():
 
     putFileForType("datasources",None,None,lambda r,p: datasourceChecker(r,p))
     putJobSchedules()
+    putQueryRewrite()
 
 
 def sparkChecker(response,payload):
@@ -576,12 +612,11 @@ if __name__ == "__main__":
     parser.add_argument("--ignoreExternal", help="Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json). default: False",default=False,action="store_true")
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--varFile",help="Protected variables file used for password replacement (if needed) default: None.",default=None)
+    parser.add_argument("--makeAppCollections",help="Do create the default collections named after the App default: True.",default=True,action="store_true")# default=False
+
     parser.add_argument("--keepCollAlias",help="Do not create Solr collection when the Fusion Collection name does not match the Solr collection. "
                                                  "Instead, fail if the collection does not exist.  default: True.",default=True,action="store_true")# default=False
 
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
-
-
     args = parser.parse_args()
-
     main()

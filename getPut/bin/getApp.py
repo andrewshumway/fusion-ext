@@ -259,7 +259,7 @@ def shouldExtractFile(filename):
     extension = os.path.splitext(path[-1])
     file = extension[0]
     ext = extension[-1]
-    if path[0] == 'blobs':
+    if path[0] == 'blobs' or path[0] == 'query_rewrite' or path[0] == 'query_rewrite_staging':
         return True
     # in 4.0.2 configsets are already unzip so each file can be extracted.  this block should catch 4.0.2 case
     # and shouldExtractConfig will catch the 4.0.1 case
