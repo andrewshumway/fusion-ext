@@ -505,21 +505,18 @@ def putFileForType(type,forceLegacy=False, idField=None, existsChecker=None ):
 def putQueryRewrite():
     rewriteUrl = makeBaseUri() + "/query-rewrite/instances"
     # get a listing of current id's so we can create or update
-    stagingdir = os.path.join(args.dir,"query_rewrite_staging",appName)
-    if os.path.isdir(stagingdir):
-        for f in os.listdir(stagingdir):
-            extension = os.path.splitext(f)[1]
-            if extension == '.json' and  os.path.isfile(os.path.join(stagingdir,f)):
-                with open(os.path.join(stagingdir,f), 'r') as jfile:
-                    staging = json.load(jfile);
-                    create = {}
-                    create['create'] = staging
-                    response = doHttpJsonPut(rewriteUrl,create)
+    qrsFile = os.path.join(args.dir,appName + "_query_rewrite.json")
+    if args.doRewrite and os.path.isfile(qrsFile):
+        with open(qrsFile, 'r') as jfile:
+            jPayload = json.load(jfile);
+            #create = {}
+            #create['create'] = staging
+            response = doHttpJsonPut(rewriteUrl,jPayload)
 
-                    if response.status_code == 200 or response.status_code == 204:
-                        sprint( "Rewrite Staging rules updated.  Republish may be needed")
-                    elif response.status_code != 200:
-                        eprint("Non OK response of " + str(response.status_code) + " when doing PUT to: " + rewriteUrl + ' response.text: ' + response.text)
+            if response.status_code == 200 or response.status_code == 204:
+                sprint( "Rewrite Staging rules updated.  Republish may be needed")
+            elif response.status_code != 200:
+                eprint("Non OK response of " + str(response.status_code) + " when doing PUT to: " + rewriteUrl + ' response.text: ' + response.text)
 
 
 def doHttpJsonPut(url,payload, usr=None, pswd=None):
@@ -613,6 +610,7 @@ if __name__ == "__main__":
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--varFile",help="Protected variables file used for password replacement (if needed) default: None.",default=None)
     parser.add_argument("--makeAppCollections",help="Do create the default collections named after the App default: True.",default=True,action="store_true")# default=False
+    parser.add_argument("--doRewrite",help="Import query rewrite objects (if any), default: False.",default=False)# default=False
 
     parser.add_argument("--keepCollAlias",help="Do not create Solr collection when the Fusion Collection name does not match the Solr collection. "
                                                  "Instead, fail if the collection does not exist.  default: True.",default=True,action="store_true")# default=False

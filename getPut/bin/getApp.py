@@ -22,10 +22,9 @@ Copyright Polaris Alpha i.e. Parsons Corp.  All rights reserved
 # profiles
 # datasources
 #
-# todo
-# schedules
-# jobs
-# sparkJobs
+# support added for
+# search clusters
+# query rewrite
 
 # Types with UNKNOWN affect
 # features
@@ -205,6 +204,17 @@ def gatherSearchClusters():
                 if 'id' in obj and obj['id'] != "default":
                     searchClusters[obj['id']] = obj
 
+def gatherQueryRewrite():
+    if args.zip is None:
+        url = makeBaseUri() + "/apps/" + args.app + "/query-rewrite/instances"
+        objects = doHttpJsonGet(url)
+        if objects:
+            create = {}
+            create["create"] = objects
+            jsonToFile(create,args.app + "_query_rewrite.json")
+
+
+
 def extractClusterForCollection(collection):
     clusterId = collection['searchClusterId']
     if clusterId in searchClusters:
@@ -253,13 +263,14 @@ def extractProject():
 
     zipfile.close()
 
+
 # check for blob zips which should be extracted intact or non-zipped configsets
 def shouldExtractFile(filename):
     path = filename.split('/')
     extension = os.path.splitext(path[-1])
     file = extension[0]
     ext = extension[-1]
-    if path[0] == 'blobs' or path[0] == 'query_rewrite' or path[0] == 'query_rewrite_staging':
+    if path[0] == 'blobs':
         return True
     # in 4.0.2 configsets are already unzip so each file can be extracted.  this block should catch 4.0.2 case
     # and shouldExtractConfig will catch the 4.0.1 case
@@ -391,6 +402,8 @@ def main():
     else:
         sprint( "Geting export zip for app '" + args.app + "' from server '" + args.server + "'.")
     extractProject()
+
+    gatherQueryRewrite()
 
 if __name__ == "__main__":
     scriptName = os.path.basename(__file__)
