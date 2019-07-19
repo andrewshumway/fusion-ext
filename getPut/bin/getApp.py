@@ -188,9 +188,11 @@ def doHttpZipGet(url, usr=None, pswd=None):
             zipfile = ZipFile(StringIO(content))
             return zipfile
         else:
-            eprint("Non Zip content type of '" + contentType + "' for url:'" + url + "'" )
-    elif response and response.status_code:
-        eprint("Non OK response of " + str(response.status_code) + " for URL: " + url)
+            eprint("Non Zip content type of '" + contentType + "' for url:'" + url + "'")
+    elif response != None and response.status_code != 200:
+        eprint("Non OK response of " + str(response.status_code) + " for URL: " + url )
+        if response.reason != None:
+            eprint("\tReported Reason: '" + response.reason + "'")
     else:
         # Bad url?? bad protocol?
         eprint("Problem requesting URL: '" + url + "'.  Check server, protocol, port, etc.")
@@ -206,6 +208,7 @@ def gatherSearchClusters():
 
 def gatherQueryRewrite():
     if args.zip is None:
+        sprint("Gathering Query Rewrite Objects")
         url = makeBaseUri() + "/apps/" + args.app + "/query-rewrite/instances"
         objects = doHttpJsonGet(url)
         if objects:
