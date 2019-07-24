@@ -356,6 +356,15 @@ def collectProfileById(elements,type):
     mylist = []
     if isinstance(elements,dict) and ('ALL' in elements.keys()):
         mylist = elements['ALL']
+    # 4.0.0 seems to give a dict of items id:[{id:val...}]
+    elif isinstance(elements,dict):
+        mylist = []
+        for k in elements:
+            v = elements[k]
+            if isinstance(v,dict):
+                mylist.append(v)
+            elif isinstance(v,list):
+                mylist.extend(v)
     elif isinstance(elements,list):
         mylist = elements
     if mylist:
