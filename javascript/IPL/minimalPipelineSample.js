@@ -16,7 +16,7 @@
         logger.debug('\n\n************JS pipeline script invoked.');
 
         //TODO: add pipeline code
-        return doc;
+            return doc;
     };
 
 })();

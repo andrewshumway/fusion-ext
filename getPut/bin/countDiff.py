@@ -3,7 +3,6 @@
 """
 Use at your own risk.  No compatibility or maintenance or other assurance of suitability is expressed or implied.
 Update or modify as needed
-Copyright Polaris Alpha i.e. Parsons Corp.  All rights reserved
 """
 
 #  Requires a python 2.7.5+ interpeter
@@ -41,10 +40,12 @@ def main():
   uniq2 = s2.difference(s1)
 
   #print output
-  if args.verbose:
+  if args.verbose or args.vc:
       sprint(str(len(common)) +" Common lines: \n\t" + str(common) + "\n")
+  if args.verbose or args.v1:
       sprint(str(len(uniq1)) + " Lines unique to " + args.FILE1 + "\n\n\t" + str(uniq1) + "\n")
-      sprint(str(len(uniq1)) +" Lines unique to " + args.FILE2 + "\n\n\t" + str(uniq2))
+  if args.verbose or args.v2:
+      sprint(str(len(uniq2)) +" Lines unique to " + args.FILE2 + "\n\n\t" + str(uniq2))
 
   else:
       sprint("\t" + str(len(common)) + "\t" + str(len(uniq1)) + "\t" + str(len(uniq2)))
@@ -70,9 +71,13 @@ if __name__ == "__main__":
     parser.add_argument("FILE1",help="File 1") #,default="lwes_"
     parser.add_argument("FILE2",help="File 2") #,default="lwes_"
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("-vc",help="Print common details, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("-v1",help="Print file 1 details, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("-v2",help="Print file 2details, default: False.",default=False,action="store_true")# default=False
 
 
 #print("args: " + str(sys.argv))
     args = parser.parse_args()
 
     main()
+

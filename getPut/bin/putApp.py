@@ -225,12 +225,14 @@ def doHttpPostPut(url,dataFile, isPut,headers=None, usr=None, pswd=None):
 def doPostByIdThenPut(apiUrl, payload, type, putParams='?_cookie=false', idField='id', usr=None, pswd=None, existsChecker=None):
     if existsChecker == None:
         existsChecker = lambda response,payload: response.status_code == 409
-    usr = getDefOrVal(usr,args.user)
-    pswd = getDefOrVal(pswd,args.password)
+
     id = payload[idField]
-    headers = {}
+
     if args.verbose:
         sprint("\nAttempting POST of " + type + " definition for '" + id + "' to Fusion.")
+    usr = getDefOrVal(usr,args.user)
+    pswd = getDefOrVal(pswd,args.password)
+    headers = {}
     headers['Content-Type'] = "application/json"
     url = apiUrl
 
@@ -404,7 +406,9 @@ def getFileListing(path,fileList=[],pathPrefix=''):
         for directory in dirs:
             getFileListing(os.path.join(path,directory),fileList,directory)
         for file in files:
-            fileList.append(os.path.join(pathPrefix,file));
+            addFile = os.path.join(pathPrefix,file)
+            if addFile not in fileList:
+              fileList.append(addFile)
     return fileList
 
 def putSchema(colName):
@@ -511,6 +515,8 @@ def putQueryRewrite():
             jPayload = json.load(jfile);
             #create = {}
             #create['create'] = staging
+
+            sprint("Uploading Query Rewrite objects. ")
             response = doHttpJsonPut(rewriteUrl,jPayload)
 
             if response.status_code == 200 or response.status_code == 204:
@@ -609,7 +615,7 @@ if __name__ == "__main__":
     parser.add_argument("--ignoreExternal", help="Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json). default: False",default=False,action="store_true")
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--varFile",help="Protected variables file used for password replacement (if needed) default: None.",default=None)
-    parser.add_argument("--makeAppCollections",help="Do create the default collections named after the App default: True.",default=True,action="store_true")# default=False
+    parser.add_argument("--makeAppCollections",help="Do create the default collections named after the App default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--doRewrite",help="Import query rewrite objects (if any), default: False.",default=False)# default=False
 
     parser.add_argument("--keepCollAlias",help="Do not create Solr collection when the Fusion Collection name does not match the Solr collection. "
