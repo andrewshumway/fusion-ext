@@ -402,7 +402,7 @@ def doHttpJsonGet(url):
 
 
 def getFileListing(path,fileList=[],pathPrefix=''):
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path,topdown=False):
         for directory in dirs:
             getFileListing(os.path.join(path,directory),fileList,directory)
         for file in files:
@@ -433,9 +433,9 @@ def putSchema(colName):
     if len(files) > 0:
         sprint("\nUploading Solr config for collection: " + colName)
     for file in files:
+        counter += 1
         #if the file is part of the current configset and is avaliable for upload, upload it.
         if os.path.isfile(os.path.join(dir,file)):
-            counter += 1
             isLast = len(files) == counter
         # see if the file exists and PUT or POST accordingly
             url = schemaUrl + '/' + file.replace(os.sep,'/')
@@ -446,6 +446,9 @@ def putSchema(colName):
             if response and response.status_code >= 200 and response.status_code <= 250:
                 if args.verbose:
                     sprint("\tUploaded " + file + " successfully")
+                    if isLast:
+                        sprint("\tSent reload=true to collection " + colName)
+
             elif response and response.status_code:
                 eprint("Non OK response: " + str(response.status_code) + " when uploading " + file)
 
