@@ -3,8 +3,6 @@
     "use strict";
 
     /**
-     * see https://doc.lucidworks.com/fusion/3.0/Search/Custom-JavaScript-Query-Stages.html for bad documentation
-     * They claim that params and ctx/_context are passed but only ctx is actually passed
      *
      * @param request The com.lucidworks.apollo.pipeline.query.Request object
      * @param response The com.lucidworks.apollo.pipeline.query.Response object (only after Solr query stage)
