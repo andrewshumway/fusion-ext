@@ -375,6 +375,7 @@ def putCollections():
                 payload["solrParams"].pop('name', None)
             # if args.ignoreExternal then don't process any collections in an external cluster
             if not args.ignoreExternal or payload["searchClusterId"] == "default":
+                # to skip sub collections add defaultFeatures=false
                 response = doPostByIdThenPut(apiUrl, payload, 'Collection','relatedObjects=false&_cookie=false')
                 if response.status_code == 200:
                     putSchema(payload['id'])
