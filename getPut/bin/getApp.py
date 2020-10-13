@@ -66,6 +66,7 @@ SKIP_COLLECTIONS = ["_signals","_signals_aggr","_job_reports","_query_rewrite","
 searchClusters = {}
 collections = []
 
+
 def eprint(msg):
     # change inputs to *args, **kwargs in python 3
     #print(*args, file=sys.stderr, **kwargs)
@@ -143,7 +144,9 @@ def initArgsFromMaps(key, default, penv,env):
 
 
 def makeBaseUri():
-    uri = args.protocol + "://" + args.server + ":" + args.port + "/api/apollo"
+    uri = args.protocol + "://" + args.server + ":" + args.port + "/api"
+    if not args.f5:
+        uri += "/apollo"
     return uri
 
 def doHttp(url,usr=None,pswd=None,headers={}):
@@ -441,6 +444,7 @@ if __name__ == "__main__":
     parser.add_argument("--protocol", help="REST Protocol,  default: ${lw_PROTOCOL} or 'http'.")
     parser.add_argument("--port", help="Fusion Port, default: ${lw_PORT} or 8764") #,default="8764"
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("--f5",help="Remove the /apollo/ section of request urls as required by 5.2: False.",default=False,action="store_true")# default=False
     parser.add_argument("--keepCollections", help="Comma delimited list of special collections to keep e.g. *_signals, default=None (skip all).",default=None) #,default="password123"
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
 

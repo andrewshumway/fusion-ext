@@ -40,6 +40,7 @@ optional arguments:
   --protocol PROTOCOL   REST Protocol,  default: ${lw_PROTOCOL} or 'http'.
   --port PORT           Fusion Port, default: ${lw_PORT} or 8764
   -v, --verbose         Print details, default: False.
+  --f5                  Remove the /apollo/ section of request urls as required by 5.2: (default False)."
   --keep KEEP           Comma delimited list of signals collections to keep, default=None.
   --debug               Print debug messages while running, default: False.
 
