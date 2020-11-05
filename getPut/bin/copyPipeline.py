@@ -136,7 +136,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument("--protocol", help="Protocol,  Default: http")
-    parser.add_argument("-s","--iserver Server", help="Inbound Server name (inbound ), Default: localhost.")
+    parser.add_argument("-s","--iserver", help="Inbound Server name (inbound ), Default: localhost.")
     parser.add_argument("-o","--oserver", help="Outbound Server name, Default: <InboundServer>.")
     parser.add_argument("--port", help="Port, Default: 8764")
     parser.add_argument("-u","--user", help="User, default admin")

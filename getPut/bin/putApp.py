@@ -266,7 +266,7 @@ def putBlobs():
 
         # read in json and figure out path and resourceType
         with open(os.path.join(args.dir,f), 'r') as jfile:
-            blobj = json.load(jfile);
+            blobj = json.load(jfile)
             resourceType = None
             blobId = blobj['id']
             meta = blobj["metadata"]
