@@ -151,7 +151,9 @@ def initArgsFromMaps(key, default, penv,env):
 
 # if we are exporting an app then use the /apps/appname bas uri so that exported elements will be linked to the app
 def makeBaseUri(forceLegacy=False):
-    base = args.protocol + "://" + args.server + ":" + args.port + "/api/apollo"
+    base = args.protocol + "://" + args.server + ":" + args.port + "/api"
+    if not args.f5:
+        base += "/apollo"
     if not appName or forceLegacy:
         uri = base
     else:
@@ -247,9 +249,9 @@ def doPostByIdThenPut(apiUrl, payload, type, putParams='?_cookie=false', idField
 
         response = requests.put(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload))
 
-    if response.status_code == 200:
+    if response.status_code >= 200 and response.status_code <= 250:
         sprint( "Element " + type + " id: " + id + " PUT/POSTed successfully")
-    elif response.status_code != 200:
+    elif response.status_code:
         eprint("Non OK response of " + str(response.status_code) + " when doing PUT/POST to: " + apiUrl + '/' + id + ' response.text: ' + response.text)
 
     return response
@@ -294,7 +296,7 @@ def putBlobs():
             sprint("Uploading blob " + f)
 
         response = doHttpPostPut(url,fullpath, True,headers )
-        if response and response.status_code >= 200 and response.status_code <= 250:
+        if response is not None and response.status_code >= 200 and response.status_code <= 250:
             if args.verbose:
                 sprint("Uploaded " + path + " payload successfully")
             # makeBaseUri(True) is used for Fusion 4.0.1 compatibility but this requires us to make the link
@@ -307,7 +309,7 @@ def putBlobs():
             if lresponse and lresponse.status_code < 200 or lresponse.status_code > 250:
                 eprint("Non OK response: " + str(lresponse.status_code) + " when linking Blob " + blobId + " to App " + appName)
 
-        elif response and response.status_code:
+        elif response is not None and response.status_code:
             eprint("Non OK response: " + str(response.status_code) + " when processing " + f)
 
 def putApps():
@@ -333,7 +335,10 @@ def putApps():
     # POST to /api/apollo/apps?relatedObjects=false to write
 
     for f in appFiles:
-        appsURL = args.protocol + "://" + args.server + ":" + args.port + "/api/apollo/apps"
+        appsURL = args.protocol + "://" + args.server + ":" + args.port + "/api"
+        if not args.f5:
+            appsURL += "/apollo"
+        appsURL += "/apps"
         postUrl = appsURL
         putUrl = appsURL + "/" + appName
         if not args.makeAppCollections:
@@ -413,7 +418,10 @@ def getFileListing(path,fileList=[],pathPrefix=''):
     return fileList
 
 def putSchema(colName):
-    schemaUrl = args.protocol + "://" + args.server + ":" + args.port + "/api/apollo/collections/" + colName + "/solr-config"
+    schemaUrl = args.protocol + "://" + args.server + ":" + args.port + "/api"
+    if not args.f5:
+        schemaUrl += "/apollo"
+    schemaUrl += "/collections/" + colName + "/solr-config"
     currentZkFiles = []
     # get a listing of current files via Fusion's solr-config api. This prevents uploading directories which don't exist (unsupported)
     zkFilesJson = doHttpJsonGet(schemaUrl + "?recursive=true")
@@ -621,6 +629,7 @@ if __name__ == "__main__":
     parser.add_argument("--varFile",help="Protected variables file used for password replacement (if needed) default: None.",default=None)
     parser.add_argument("--makeAppCollections",help="Do create the default collections named after the App default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--doRewrite",help="Import query rewrite objects (if any), default: False.",default=False)# default=False
+    parser.add_argument("--f5",help="Remove the /apollo/ section of request urls as required by 5.3: False.",default=False,action="store_true")# default=False
 
     parser.add_argument("--keepCollAlias",help="Do not create Solr collection when the Fusion Collection name does not match the Solr collection. "
                                                  "Instead, fail if the collection does not exist.  default: True.",default=True,action="store_true")# default=False

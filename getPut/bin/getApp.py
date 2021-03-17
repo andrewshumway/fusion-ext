@@ -118,7 +118,7 @@ def initArgs():
 
     if args.dir == None:
         # make default dir name
-        defDir = args.app + "_" + datetime.datetime.now().strftime('%Y%m%d_%H%M')
+        defDir = str(args.app) + "_" + datetime.datetime.now().strftime('%Y%m%d_%H%M')
         args.dir = defDir
     elif os.sep not in args.dir:
         defDir = args.dir
