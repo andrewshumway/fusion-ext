@@ -138,11 +138,11 @@ def initArgs():
 
 
 def initArgsFromMaps(key, default, penv,env):
-    if penv.has_key(key):
+    if key in penv:
         debug("penv has_key" + key + " : " + penv[key])
         return penv[key]
     else:
-        if env.has_key(key):
+        if key in env:
             debug("eenv has_key" + key + " : " + env[key])
             return env[key]
         else:
@@ -356,7 +356,7 @@ def putApps():
                 sprint( "Created App " + appName)
         elif response.status_code != 200:
             if args.verbose:
-                print "...Failure."
+                print("...Failure.")
             eprint("Non OK response of " + str(response.status_code) + " when POSTing: " + f)
 
 
