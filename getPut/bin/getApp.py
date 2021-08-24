@@ -38,8 +38,9 @@ Copyright Polaris Alpha i.e. Parsons Corp.  All rights reserved
 #  Requires a python 2.7.5+ interpeter
 
 import json, sys, argparse, os, subprocess, sys, requests, datetime, re, shutil,types
-from io import BytesIO
-from StringIO import StringIO
+from io import BytesIO, StringIO
+# StringIO moved into io package for Python 3
+#from StringIO import StringIO
 from zipfile import ZipFile
 from argparse import RawTextHelpFormatter
 
@@ -131,11 +132,13 @@ def initArgs():
 
 
 def initArgsFromMaps(key, default, penv,env):
-    if penv.has_key(key):
+    # Python3: dict.has_key -> key in dict
+    if key in penv:
         debug("penv has_key" + key + " : " + penv[key])
         return penv[key]
     else:
-        if env.has_key(key):
+        # Python3: dict.has_key -> key in dict
+        if key in env:
             debug("eenv has_key" + key + " : " + env[key])
             return env[key]
         else:
@@ -188,7 +191,7 @@ def doHttpZipGet(url, usr=None, pswd=None):
         # use a contains check since the contentType may be 'application/json; utf-8' or multi-valued
         if "application/zip" in contentType:
             content = response.content
-            zipfile = ZipFile(StringIO(content))
+            zipfile = ZipFile(BytesIO(content))
             return zipfile
         else:
             eprint("Non Zip content type of '" + contentType + "' for url:'" + url + "'")
@@ -255,7 +258,8 @@ def extractProject():
         sys.exit("No Fusion App called '" + args.app + "' found on server '" + args.server + "'.  Can not proceed.")
 
     # sorting ensures that collections are known when other elements are extracted
-    for type in sorted(objects['objects'].iterkeys()):
+    # python 3 iterkeys() -> keys()
+    for type in sorted(objects['objects'].keys()):
         #obj will be the name of the object type just under objects i.e. objects.collections, indexPipelines etc.
         doObjectTypeSwitch(objects['objects'][type],type)
 
