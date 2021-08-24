@@ -10,8 +10,6 @@ This  can be download or cloned onto a customer's machine but using it locally i
 
 ##  Import or Export Fusion Apps
 
- 
-
 Use `getApp.sh` to export a Fusion App and store it as files in an output directory.
 ```bash
 $ getApp.sh --help
@@ -137,8 +135,8 @@ This script will fetch all Collections, Datasources, Index Pipelines, and Query 
 
 ### Installation Notes:
 
-These scripts require Python version 2.7. and have been used both in CentOS 7, and on a Windows git-bash shell. 
-Some clients such as Windows, do not have a standard Python interpreter so one will need to be installed (https://www.python.org/).  and added to the PATH.
+Prior to v1.3, these scripts used Python version 2.7. From v1.3 onward, Python 3 is needed (developed against 3.9+).
+Some clients such as Windows, do not have a standard Python interpreter so one will need to be installed (https://www.python.org/) and added to the PATH.
 Some clients ship with the `requests` package (from http://python-requests.org). Many however will need to install this via 
 `pip install requests` (CentOS, MacOS).  Pip itself may need installation as well via `yum install`, `brew install`, etc.
  
