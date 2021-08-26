@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Use at your own risk.  No compatibility or maintenance or other assurance of suitability is expressed or implied.
@@ -35,7 +35,7 @@ Copyright Polaris Alpha i.e. Parsons Corp.  All rights reserved
 # query Fusion for all datasources, index pipelines and query pipelines.  Then make lists of names
 # which start with the $PREFIX so that they can all be exported.
 
-#  Requires a python 2.7.5+ interpeter (pre tag v1.3) or 3.x after (tested on 3.9)
+#  Requires a python 2.7.5+ interpreter (pre tag v1.3) or 3.x after (tested on 3.9)
 
 import json, sys, argparse, os, subprocess, sys, requests, datetime, re, shutil,types
 from io import BytesIO, StringIO

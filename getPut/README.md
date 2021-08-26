@@ -50,7 +50,9 @@ $ putApp.sh --help
 
 usage: putApp.py [-h] -d DIR [--protocol PROTOCOL] [-s SVR] [--port PORT]
                  [-u USER] [--password PASSWORD] [--ignoreExternal] [-v]
-                 [--varFile VARFILE] [--debug]
+                 [--humanReadable] [--varFile VARFILE] [--makeAppCollections]
+                 [--doRewrite DOREWRITE] [--f5] [--keepCollAlias] [--debug]
+                 [--noVerify]
 
 ______________________________________________________________________________
 Take a folder containing .json files (produced by getApp.py) and POST the contents 
@@ -69,10 +71,17 @@ optional arguments:
   --port PORT           Port, Default: ${lw_PORT} or 8764
   -u USER, --user USER  Fusion user, default: ${lw_USER} or 'admin'.
   --password PASSWORD   Fusion password,  default: ${lw_PASSWORD} or 'password123'.
-  --ignoreExternal      Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json) default: False
+  --ignoreExternal      Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json). default: False
   -v, --verbose         Print details, default: False.
+  --humanReadable       Named for consistency with getApp.  This param reverses the getApp mutations by copying human readable script to the script element of pipeline stages, default: False.
   --varFile VARFILE     Protected variables file used for password replacement (if needed) default: None.
+  --makeAppCollections  Do create the default collections named after the App default: False.
+  --doRewrite DOREWRITE
+                        Import query rewrite objects (if any), default: False.
+  --f5                  Remove the /apollo/ section of request urls as required by 5.3: False.
+  --keepCollAlias       Do not create Solr collection when the Fusion Collection name does not match the Solr collection. Instead, fail if the collection does not exist.  default: True.
   --debug               Print debug messages while running, default: False.
+  --noVerify            Do not verify SSL certificates if using https, default: False.
 
 ```
 

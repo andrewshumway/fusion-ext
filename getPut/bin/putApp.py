@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Use at your own risk.  No compatibility or maintenance or other assurance of suitability is expressed or implied.
 Update or modify as needed
@@ -642,7 +642,7 @@ if __name__ == "__main__":
     parser.add_argument("--password", help="Fusion password,  default: ${lw_PASSWORD} or 'password123'.") #,default="password123"
     parser.add_argument("--ignoreExternal", help="Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json). default: False",default=False,action="store_true")
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
-    parser.add_argument("--humanReadable",help="For consistency with getApp params this name is maintained but it performs the reverse and moves the human readable script into the script element of pipeline stages, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("--humanReadable",help="This param reverses the getApp mutations by copying human readable script to the script element of pipeline stages, default: False.",default=False,action="store_true")# default=False
 
     parser.add_argument("--varFile",help="Protected variables file used for password replacement (if needed) default: None.",default=None)
     parser.add_argument("--makeAppCollections",help="Do create the default collections named after the App default: False.",default=False,action="store_true")# default=False
