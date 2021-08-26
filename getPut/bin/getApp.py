@@ -68,10 +68,8 @@ searchClusters = {}
 collections = []
 
 
-def eprint(msg):
-    # change inputs to *args, **kwargs in python 3
-    #print(*args, file=sys.stderr, **kwargs)
-    print >> sys.stderr, msg
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 def sprint(msg):
     # change inputs to *args, **kwargs in python 3
@@ -158,9 +156,11 @@ def doHttp(url,usr=None,pswd=None,headers={}):
         usr = args.user
     if not pswd:
         pswd = args.password
+
+    verify = not args.noVerify
     try:
         debug("calling requests.get url:" +url + " usr:" + usr + " pswd:" + pswd + " headers:" + str(headers))
-        response = requests.get(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers)
+        response = requests.get(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers,verify=verify)
         return response
     except requests.ConnectionError as e:
         eprint(e)
@@ -344,7 +344,8 @@ def jsonToFile(jData,filename):
     with open(os.path.join(args.dir, filename2), 'w') as outfile:
         # sorting keys makes the output source-control friendly.  Do we also want to strip out
         # timestamp fields?
-        outfile.write(json.dumps(jData,indent=4,sort_keys=True))
+        outfile.write(json.dumps(jData,indent=4,sort_keys=True,
+                                 separators=(', ', ': ') ))
 
 def collectById(elements,type,keyField='id'):
     for e in elements:
@@ -353,9 +354,17 @@ def collectById(elements,type,keyField='id'):
         id = e[keyField]
         if args.verbose:
             sprint("Processing '" + type + "' object: " + id)
+        # spin thru e and look for 'stages' with 'script'
+        if args.humanReadable and isinstance(e,dict) and type.endswith("Pipelines") and ('stages' in e.keys()):
+            for stage in e['stages']:
+                if isinstance(stage,dict) and ('script' in stage.keys()):
+                    script = stage['script']
+                    # Turn the lines into an array and add it back for readability
+                    stage["readableScript"] = script.splitlines()
+
         # some jobs have : in the id, some blobs have a path.  Remove problem characters in filename
         filename = applySuffix(id.replace(':','_').replace('/','_'),type)
-        jsonToFile(e,filename);
+        jsonToFile(e,filename)
 
 def collectProfileById(elements,type):
     # this code is tentative.  The pipeline elements contains a sub object called 'ALL' which then contains the list we want
@@ -451,6 +460,8 @@ if __name__ == "__main__":
     parser.add_argument("--f5",help="Remove the /apollo/ section of request urls as required by 5.2: False.",default=False,action="store_true")# default=False
     parser.add_argument("--keepCollections", help="Comma delimited list of special collections to keep e.g. *_signals, default=None (skip all).",default=None) #,default="password123"
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("--noVerify",help="Do not verify SSL certificates if using https, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("--humanReadable",help="copy JS scripts to a human readable format, default: False.",default=False,action="store_true")# default=False
 
     #print("args: " + str(sys.argv))
     args = parser.parse_args()

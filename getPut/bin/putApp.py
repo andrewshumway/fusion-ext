@@ -213,9 +213,9 @@ def doHttpPostPut(url,dataFile, isPut,headers=None, usr=None, pswd=None):
         if os.path.isfile(dataFile):
             with open(dataFile,'rb') as payload:
                 if isPut:
-                    response = requests.put(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=payload)
+                    response = requests.put(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=payload,verify=isVerify())
                 else:
-                    response = requests.post(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=payload)
+                    response = requests.post(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=payload,verify=isVerify())
 
                 return response
         else:
@@ -238,7 +238,7 @@ def doPostByIdThenPut(apiUrl, payload, type, putParams='?_cookie=false', idField
     headers['Content-Type'] = "application/json"
     url = apiUrl
 
-    response = requests.post(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload))
+    response = requests.post(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload),verify=isVerify())
     if existsChecker(response,payload):
         if args.verbose:
             sprint("The " + type + " definition for '" + id + "' exists.  Attempting PUT.")
@@ -247,7 +247,7 @@ def doPostByIdThenPut(apiUrl, payload, type, putParams='?_cookie=false', idField
         if putParams:
             url += "?" + putParams
 
-        response = requests.put(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload))
+        response = requests.put(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),headers=headers, data=json.dumps(payload),verify=isVerify())
 
     if response.status_code >= 200 and response.status_code <= 250:
         sprint( "Element " + type + " id: " + id + " PUT/POSTed successfully")
@@ -305,7 +305,7 @@ def putBlobs():
             payload = {"subject":"","object":"","linkType":"inContextOf"}
             payload['subject'] = 'blob:' + blobId
             payload['object'] = 'app:' + appName
-            lresponse = requests.put(lurl, auth=requests.auth.HTTPBasicAuth(args.user, args.password),headers={"Content-Type": "application/json"}, data=json.dumps(payload))
+            lresponse = requests.put(lurl, auth=requests.auth.HTTPBasicAuth(args.user, args.password),headers={"Content-Type": "application/json"}, data=json.dumps(payload),verify=isVerify())
             if lresponse and lresponse.status_code < 200 or lresponse.status_code > 250:
                 eprint("Non OK response: " + str(lresponse.status_code) + " when linking Blob " + blobId + " to App " + appName)
 
@@ -385,12 +385,18 @@ def putCollections():
                 if response.status_code == 200:
                     putSchema(payload['id'])
 
+#
+# invert the args.noVerify for readability
+#
+def isVerify():
+  return not args.noVerify
+
 def doHttp(url,usr=None, pswd=None):
     usr = getDefOrVal(usr,args.user)
     pswd = getDefOrVal(pswd,args.password)
     response = None
     try:
-        response = requests.get(url, auth=requests.auth.HTTPBasicAuth(usr, pswd))
+        response = requests.get(url, auth=requests.auth.HTTPBasicAuth(usr, pswd),verify=isVerify())
         return response
     except requests.ConnectionError as e:
         eprint(e)
@@ -462,10 +468,8 @@ def putSchema(colName):
                 eprint("Non OK response: " + str(response.status_code) + " when uploading " + file)
 
 
-def eprint(msg):
-    # change inputs to *args, **kwargs in python 3
-    #print(*args, file=sys.stderr, **kwargs)
-    print >> sys.stderr, msg
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 def sprint(msg):
     # change inputs to *args, **kwargs in python 3
@@ -504,6 +508,15 @@ def putJobSchedules():
             elif response.status_code != 200 and response.status_code != 404:
                 eprint("Non OK response of " + str(response.status_code) + " when PUTing: " + url)
 
+def migrateReadableScript(data,type):
+    if type.endswith("pipelines") and isinstance(data,dict) and ('stages' in data.keys()):
+        for stage in data['stages']:
+            if isinstance(stage,dict) and ('script' in stage.keys()) and ('readableScript' in stage.keys()):
+                nonReadable = "\n".join(stage["readableScript"])
+                stage["script"] = nonReadable
+                stage.pop("readableScript",None)
+
+
 def putFileForType(type,forceLegacy=False, idField=None, existsChecker=None ):
     if not idField:
         idField = 'id'
@@ -515,6 +528,9 @@ def putFileForType(type,forceLegacy=False, idField=None, existsChecker=None ):
                 if args.verbose and isinstance(varReplacements, dict):
                     sprint("Doing substitution for file " + f)
                 payload = traverseAndReplace(payload,f, varReplacements)
+            if args.humanReadable:
+                migrateReadableScript(payload,type)
+
             #doPostByIdThenPut(apiUrl, payload, type,None, idField)
             doPostByIdThenPut(apiUrl, payload, type,None,idField,None,None,existsChecker)
 
@@ -569,8 +585,8 @@ def main():
     # do not update external searchCluster config if ignoreExternal=True
     if not args.ignoreExternal:
         putFileForType('searchCluster',True)
-    putCollections()
-    putBlobs()
+    #putCollections()
+    #putBlobs()
     putFileForType('index-pipelines')
     putFileForType('query-pipelines')
     putFileForType('parsers')
@@ -626,6 +642,8 @@ if __name__ == "__main__":
     parser.add_argument("--password", help="Fusion password,  default: ${lw_PASSWORD} or 'password123'.") #,default="password123"
     parser.add_argument("--ignoreExternal", help="Ignore (do not process) configurations for external Solr clusters (*_SC.json) and their associated collections (*_COL.json). default: False",default=False,action="store_true")
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("--humanReadable",help="For consistency with getApp params this name is maintained but it performs the reverse and moves the human readable script into the script element of pipeline stages, default: False.",default=False,action="store_true")# default=False
+
     parser.add_argument("--varFile",help="Protected variables file used for password replacement (if needed) default: None.",default=None)
     parser.add_argument("--makeAppCollections",help="Do create the default collections named after the App default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--doRewrite",help="Import query rewrite objects (if any), default: False.",default=False)# default=False
@@ -635,5 +653,8 @@ if __name__ == "__main__":
                                                  "Instead, fail if the collection does not exist.  default: True.",default=True,action="store_true")# default=False
 
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
+    parser.add_argument("--noVerify",help="Do not verify SSL certificates if using https, default: False.",default=False,action="store_true")# default=False
+
+
     args = parser.parse_args()
     main()
