@@ -458,13 +458,12 @@ if __name__ == "__main__":
     parser.add_argument("--port", help="Fusion Port, default: ${lw_PORT} or 8764") #,default="8764"
     parser.add_argument("-v","--verbose",help="Print details, default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--f5",help="Remove the /apollo/ section of request urls as required by 5.2: False.",default=False,action="store_true")# default=False
-    parser.add_argument("--keepCollections", help="Comma delimited list of special collections to keep e.g. *_signals, default=None (skip all).",default=None) #,default="password123"
+    parser.add_argument("--keepCollections", help="Comma delimited list of special collections to keep e.g. *_signals, default=None (skip all special collections).",default=None) #,default="password123"
     parser.add_argument("--debug",help="Print debug messages while running, default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--noVerify",help="Do not verify SSL certificates if using https, default: False.",default=False,action="store_true")# default=False
     parser.add_argument("--humanReadable",help="copy JS scripts to a human readable format, default: False.",default=False,action="store_true")# default=False
 
     #print("args: " + str(sys.argv))
     args = parser.parse_args()
-
 
     main()

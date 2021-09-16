@@ -585,8 +585,8 @@ def main():
     # do not update external searchCluster config if ignoreExternal=True
     if not args.ignoreExternal:
         putFileForType('searchCluster',True)
-    #putCollections()
-    #putBlobs()
+    putCollections()
+    putBlobs()
     putFileForType('index-pipelines')
     putFileForType('query-pipelines')
     putFileForType('parsers')
