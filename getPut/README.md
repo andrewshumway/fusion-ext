@@ -2,6 +2,10 @@
 
 Utilities for getting or putting a 4.x Fusion App or a set of objects in Fusion 3.x which share a common name prefix.
 
+# DEPRECATED -- no longer in active development
+The getPut portion of this repo has been moved to https://github.com/andrewshumway/Fusion_getPut
+The JavaScript examples may still be useful for reference but are no longer in use.
+
 This set of utilities can be used to import and export, tier migration, or backup.
 Other utilities for renaming projects and performing rudimentary search/replace operations
 are also included.
