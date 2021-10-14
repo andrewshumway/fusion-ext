@@ -1,6 +1,9 @@
 # fusion-ext
 Project: `getPut` for import/export, `javascript` for examples and utilities.  Both for use with Lucidworks Fusion. 
 
+# DEPRECATED
+The getPut portion of this repo has been moved to https://github.com/andrewshumway/Fusion_getPut
+The JavaScript examples may still be useful for reference but are no longer in use.
 
 ### ./getPut
 The getPut directory contains utilities useful when getting or putting objects and artifacts from/to Fusion.
